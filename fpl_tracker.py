@@ -35,7 +35,17 @@ from openpyxl.utils import get_column_letter
 # CONFIG
 # ---------------------------------------------------------------------------
 
-ENTRY_ID = int(os.environ.get("FPL_ENTRY_ID") or 0) or 8592220   # <-- YOUR manager ID
+ENTRY_ID = 8592220                  # <-- YOUR manager ID (or set FPL_ENTRY_ID)
+
+
+def _entry_id() -> int:
+    raw = (os.environ.get("FPL_ENTRY_ID") or "").strip()
+    if raw.isdigit():
+        return int(raw)
+    return ENTRY_ID
+
+
+ENTRY_ID = _entry_id()
 OUTPUT = Path("fpl_tracker.xlsx")
 HISTORY = Path("fpl_history.csv")   # the append-only store. Back this up.
 FIXTURE_HORIZON = 6                 # gameweeks ahead for fixture difficulty
