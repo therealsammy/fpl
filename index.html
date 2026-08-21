@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FPL Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0E1420;
+            --surface: #161E2C;
+            --raised: #1D2739;
+            --line: #2A3549;
+            --text: #E6ECF5;
+            --muted: #8A9AB4;
+            --faint: #5D6C85;
+            --rise: #35D07F;
+            --fall: #FF5C7A;
+            --armband: #FFB627;
+            --cool: #4C8DFF;
+            --row: 38px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%
+        }
+
+        body {
+            background: var(--ink);
+            color: var(--text);
+            font-family: 'Hanken Grotesk', system-ui, sans-serif;
+            font-size: 14px;
+            line-height: 1.45;
+            padding-bottom: 40px;
+        }
+
+        .mono {
+            font-family: 'IBM Plex Mono', ui-monospace, monospace;
+            font-variant-numeric: tabular-nums
+        }
+
+        /* ---- masthead ---- */
+        header {
+            border-bottom: 1px solid var(--line);
+            background: var(--surface);
+            padding: 14px 18px;
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+        }
+
+        h1 span {
+            color: var(--armband)
+        }
+
+        .meta {
+            font-size: 11.5px;
+            color: var(--muted);
+            letter-spacing: .04em
+        }
+
+        .meta b {
+            color: var(--text);
+            font-weight: 500
+        }
+
+        /* ---- tabs ---- */
+        nav {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface);
+            padding: 0 18px;
+            overflow-x: auto
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: 11px 15px;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+
+        nav button:hover {
+            color: var(--text)
+        }
+
+        nav button[aria-selected="true"] {
+            color: var(--armband);
+            border-bottom-color: var(--armband)
+        }
+
+        nav button:focus-visible {
+            outline: 2px solid var(--cool);
+            outline-offset: -2px
+        }
+
+        /* ---- controls ---- */
+        .controls {
+            background: var(--surface);
+            border-bottom: 1px solid var(--line);
+            padding: 12px 18px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .ctl {
+            display: flex;
+            flex-direction: column;
+            gap: 5px
+        }
+
+        .ctl>label {
+            font-size: 10px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--faint);
+            font-weight: 600
+        }
+
+        input[type=text],
+        input[type=number],
+        select {
+            background: var(--ink);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: 4px;
+            padding: 6px 9px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12.5px;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--cool)
+        }
+
+        input[type=number] {
+            width: 66px
+        }
+
+        #search {
+            width: 190px
+        }
+
+        .range {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            color: var(--faint);
+            font-size: 11px
+        }
+
+        .pills {
+            display: flex;
+            gap: 4px
+        }
+
+        .pill {
+            background: var(--ink);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            border-radius: 4px;
+            padding: 6px 11px;
+            cursor: pointer;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11.5px;
+            font-weight: 500;
+            letter-spacing: .05em;
+        }
+
+        .pill[aria-pressed="true"] {
+            background: var(--cool);
+            border-color: var(--cool);
+            color: #fff
+        }
+
+        .pill.armband[aria-pressed="true"] {
+            background: var(--armband);
+            border-color: var(--armband);
+            color: #3A2600
+        }
+
+        .pill:focus-visible {
+            outline: 2px solid var(--cool);
+            outline-offset: 1px
+        }
+
+        .reset {
+            margin-left: auto;
+            align-self: flex-end
+        }
+
+        .reset button {
+            background: none;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            border-radius: 4px;
+            padding: 6px 11px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11.5px;
+        }
+
+        .reset button:hover {
+            color: var(--text);
+            border-color: var(--faint)
+        }
+
+        /* ---- table ---- */
+        .wrap {
+            overflow-x: auto
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background: var(--raised);
+            z-index: 5;
+            font-size: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 600;
+            text-align: right;
+            padding: 9px 10px;
+            white-space: nowrap;
+            cursor: pointer;
+            border-bottom: 1px solid var(--line);
+        }
+
+        thead th:first-child,
+        thead th.l {
+            text-align: left
+        }
+
+        thead th:hover {
+            color: var(--text)
+        }
+
+        thead th[data-dir] {
+            color: var(--armband)
+        }
+
+        thead th[data-dir]::after {
+            content: ' ▾';
+            font-size: 9px
+        }
+
+        thead th[data-dir="asc"]::after {
+            content: ' ▴'
+        }
+
+        tbody tr {
+            border-bottom: 1px solid rgba(42, 53, 73, .5);
+            cursor: pointer;
+            height: var(--row)
+        }
+
+        tbody tr:hover {
+            background: var(--raised)
+        }
+
+        tbody tr.mine {
+            box-shadow: inset 3px 0 0 var(--armband)
+        }
+
+        tbody tr.sel {
+            background: var(--raised)
+        }
+
+        td {
+            padding: 6px 10px;
+            text-align: right;
+            white-space: nowrap
+        }
+
+        td.l {
+            text-align: left
+        }
+
+        .name {
+            font-weight: 600
+        }
+
+        .sub {
+            color: var(--faint);
+            font-size: 11px;
+            font-family: 'IBM Plex Mono', monospace
+        }
+
+        .up {
+            color: var(--rise)
+        }
+
+        .down {
+            color: var(--fall)
+        }
+
+        .flat {
+            color: var(--faint)
+        }
+
+        .tag {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            border: 1px solid;
+            letter-spacing: .04em;
+        }
+
+        .tag.ok {
+            color: var(--faint);
+            border-color: transparent
+        }
+
+        .tag.warn {
+            color: var(--armband);
+            border-color: rgba(255, 182, 39, .35)
+        }
+
+        .tag.bad {
+            color: var(--fall);
+            border-color: rgba(255, 92, 122, .35)
+        }
+
+        /* ---- detail drawer ---- */
+        .drawer {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: min(430px, 100%);
+            background: var(--surface);
+            border-left: 1px solid var(--line);
+            transform: translateX(100%);
+            transition: transform .22s ease;
+            z-index: 40;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .drawer.open {
+            transform: none
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+            .drawer {
+                transition: none
+            }
+        }
+
+        .drawer h2 {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -.01em
+        }
+
+        .drawer .who {
+            color: var(--muted);
+            font-size: 12px;
+            margin-bottom: 18px
+        }
+
+        .close {
+            position: absolute;
+            top: 16px;
+            right: 18px;
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1
+        }
+
+        .close:hover {
+            color: var(--text)
+        }
+
+        .statgrid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1px;
+            background: var(--line);
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px
+        }
+
+        .statgrid div {
+            background: var(--surface);
+            padding: 9px 10px
+        }
+
+        .statgrid dt {
+            font-size: 9.5px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--faint);
+            margin-bottom: 2px
+        }
+
+        .statgrid dd {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 15px;
+            font-weight: 500
+        }
+
+        .chart {
+            margin-bottom: 16px
+        }
+
+        .chart h3 {
+            font-size: 10px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between
+        }
+
+        .chart h3 span {
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0;
+            text-transform: none;
+            font-size: 12px
+        }
+
+        /* ---- states ---- */
+        .state {
+            padding: 56px 22px;
+            text-align: center;
+            color: var(--muted);
+            max-width: 520px;
+            margin: 0 auto
+        }
+
+        .state h2 {
+            font-size: 17px;
+            color: var(--text);
+            margin-bottom: 10px;
+            font-weight: 600
+        }
+
+        .state p {
+            margin-bottom: 14px;
+            font-size: 13.5px
+        }
+
+        .state code {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--raised);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: var(--armband)
+        }
+
+        .state label {
+            display: inline-block;
+            background: var(--cool);
+            color: #fff;
+            padding: 9px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .state input {
+            display: none
+        }
+
+        .count {
+            padding: 9px 18px;
+            color: var(--faint);
+            font-size: 11.5px;
+            font-family: 'IBM Plex Mono', monospace;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .only-sm {
+            display: none
+        }
+
+        @media(max-width:720px) {
+            .hide-sm {
+                display: none
+            }
+
+            .only-sm {
+                display: block
+            }
+
+            .controls {
+                padding: 10px 12px;
+                gap: 11px;
+                position: static
+            }
+
+            .controls.collapsed {
+                display: none
+            }
+
+            header {
+                padding: 12px
+            }
+
+            td,
+            thead th {
+                padding: 6px
+            }
+
+            nav {
+                position: sticky;
+                top: 0;
+                z-index: 25
+            }
+
+            #search {
+                width: 100%
+            }
+
+            .ctl {
+                flex: 1 1 auto;
+                min-width: 120px
+            }
+
+            .reset {
+                margin-left: 0
+            }
+        }
+
+        nav .only-sm {
+            margin-left: auto;
+            color: var(--cool);
+            border-bottom-color: transparent;
+        }
+
+        nav .only-sm[aria-expanded="true"] {
+            color: var(--armband)
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>FPL <span>Tracker</span></h1>
+        <div class="meta" id="masthead">Loading…</div>
+    </header>
+
+    <nav role="tablist">
+        <button role="tab" data-view="players" aria-selected="true">Players</button>
+        <button role="tab" data-view="movers" aria-selected="false">Movers</button>
+        <button role="tab" data-view="teams" aria-selected="false">Teams</button>
+        <button class="only-sm" id="filterToggle" aria-expanded="false" aria-controls="controls">Filters</button>
+    </nav>
+
+    <div id="app">
+        <div class="state">
+            <h2>Loading data…</h2>
+        </div>
+    </div>
+
+    <aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+    <script>
+        'use strict';
+
+        const CSV = 'fpl_history.csv';
+        const NUM = ['Price', 'Owned %', 'Form', 'Total pts', 'GW pts', 'PPG', 'Minutes', 'Starts',
+            'Goals', 'Assists', 'xGI', 'DEFCON', 'DEFCON per 90', 'Exp pts next',
+            'Transfers in (GW)', 'Transfers out (GW)', 'Price change (GW)', 'GW'];
+
+        let RAW = [], SNAPS = [], BY_ID = new Map(), LATEST = [], VIEW = 'players';
+        let SEL = null, SORT = { key: 'Total pts', dir: 'desc' };
+        let SQUAD = loadSquad();
+        let FILTERS_OPEN = false;
+        const SMALL = window.matchMedia('(max-width:720px)').matches;
+
+        const F = {
+            q: '', pos: new Set(), team: '', pmin: '', pmax: '', omin: '', omax: '',
+            mins: '', avail: false, mine: false, trend: 'Owned %'
+        };
+
+        /* ---------- storage (degrades to memory) ---------- */
+        function loadSquad() {
+            try { return new Set(JSON.parse(localStorage.getItem('fpl.squad') || '[]')); }
+            catch (e) { return new Set(); }
+        }
+        function saveSquad() {
+            try { localStorage.setItem('fpl.squad', JSON.stringify([...SQUAD])); } catch (e) { }
+        }
+
+        /* ---------- load ---------- */
+        fetch(CSV)
+            .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+            .then(ingest)
+            .catch(() => renderNoData());
+
+        /* Minimal RFC4180 CSV parser. Handles quoted fields, embedded commas,
+           escaped quotes and CRLF. No dependency, so the page works offline. */
+        function parseCSV(text) {
+            const rows = []; let row = [], field = '', q = false;
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                if (q) {
+                    if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else q = false; }
+                    else field += c;
+                } else if (c === '"') { q = true; }
+                else if (c === ',') { row.push(field); field = ''; }
+                else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+                else if (c !== '\r') { field += c; }
+            }
+            if (field.length || row.length) { row.push(field); rows.push(row); }
+            if (!rows.length) return [];
+            const head = rows.shift();
+            return rows.filter(r => r.length > 1)
+                .map(r => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
+        }
+
+        function ingest(text) {
+            RAW = parseCSV(text.trim()).map(r => {
+                const o = { ...r };
+                NUM.forEach(k => { o[k] = r[k] === '' || r[k] == null ? null : Number(r[k]); });
+                o.ID = Number(r.ID);
+                return o;
+            }).filter(r => !isNaN(r.ID));
+
+            if (!RAW.length) return renderNoData('The file parsed but contained no rows.');
+
+            SNAPS = [...new Set(RAW.map(r => r.Snapshot))].sort();
+            BY_ID = new Map();
+            RAW.forEach(r => {
+                if (!BY_ID.has(r.ID)) BY_ID.set(r.ID, []);
+                BY_ID.get(r.ID).push(r);
+            });
+            BY_ID.forEach(v => v.sort((a, b) => a.Snapshot.localeCompare(b.Snapshot)));
+
+            const last = SNAPS[SNAPS.length - 1];
+            LATEST = RAW.filter(r => r.Snapshot === last).map(r => {
+                const s = BY_ID.get(r.ID);
+                return {
+                    ...r,
+                    dPrice: delta(s, 'Price', 1), dOwned: delta(s, 'Owned %', 1),
+                    dForm: delta(s, 'Form', 1), dPts: delta(s, 'Total pts', 1),
+                    dxGI: delta(s, 'xGI', 1),
+                    wPrice: delta(s, 'Price', 4), wOwned: delta(s, 'Owned %', 4)
+                };
+            });
+
+            const gw = LATEST[0]?.GW ?? '?';
+            document.getElementById('masthead').innerHTML =
+                `<b>GW${gw}</b> · ${LATEST.length} players · <b>${SNAPS.length}</b> snapshot${SNAPS.length === 1 ? '' : 's'} ` +
+                `· ${SNAPS[0]} → ${last}`;
+            render();
+        }
+
+        function delta(series, key, back) {
+            if (series.length <= back) return null;
+            const now = series[series.length - 1][key], then = series[series.length - 1 - back][key];
+            if (now == null || then == null) return null;
+            return Math.round((now - then) * 100) / 100;
+        }
+
+        /* ---------- filtering ---------- */
+        function filtered() {
+            return LATEST.filter(p => {
+                if (F.q && !p.Player.toLowerCase().includes(F.q)) return false;
+                if (F.pos.size && !F.pos.has(p.Pos)) return false;
+                if (F.team && p.Team !== F.team) return false;
+                if (F.pmin !== '' && p.Price < +F.pmin) return false;
+                if (F.pmax !== '' && p.Price > +F.pmax) return false;
+                if (F.omin !== '' && p['Owned %'] < +F.omin) return false;
+                if (F.omax !== '' && p['Owned %'] > +F.omax) return false;
+                if (F.mins !== '' && p.Minutes < +F.mins) return false;
+                if (F.avail && p.Status !== 'Available') return false;
+                if (F.mine && !SQUAD.has(p.ID)) return false;
+                return true;
+            }).sort((a, b) => {
+                const x = a[SORT.key], y = b[SORT.key];
+                if (x == null) return 1; if (y == null) return -1;
+                const c = typeof x === 'string' ? x.localeCompare(y) : x - y;
+                return SORT.dir === 'asc' ? c : -c;
+            });
+        }
+
+        /* ---------- render ---------- */
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = controls() +
+                (VIEW === 'teams' ? teamsView() : VIEW === 'movers' ? moversView() : playersView());
+            wire();
+        }
+
+        function controls() {
+            const teams = [...new Set(LATEST.map(p => p.Team))].sort();
+            const pill = (p) => `<button class="pill" data-pos="${p}" aria-pressed="${F.pos.has(p)}">${p}</button>`;
+            const collapsed = SMALL && !FILTERS_OPEN ? " collapsed" : "";
+            return `<div class="controls${collapsed}" id="controls">
+    <div class="ctl"><label for="search">Search</label>
+      <input type="text" id="search" placeholder="Player name" value="${F.q}"></div>
+    <div class="ctl"><label>Position</label>
+      <div class="pills">${['GKP', 'DEF', 'MID', 'FWD'].map(pill).join('')}</div></div>
+    <div class="ctl"><label for="team">Team</label>
+      <select id="team"><option value="">All</option>
+      ${teams.map(t => `<option ${F.team === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+    <div class="ctl"><label>Price £m</label><div class="range">
+      <input type="number" id="pmin" step="0.5" placeholder="min" value="${F.pmin}">to
+      <input type="number" id="pmax" step="0.5" placeholder="max" value="${F.pmax}"></div></div>
+    <div class="ctl"><label>Owned %</label><div class="range">
+      <input type="number" id="omin" step="1" placeholder="min" value="${F.omin}">to
+      <input type="number" id="omax" step="1" placeholder="max" value="${F.omax}"></div></div>
+    <div class="ctl"><label for="mins">Min minutes</label>
+      <input type="number" id="mins" step="90" placeholder="0" value="${F.mins}"></div>
+    <div class="ctl"><label for="trend">Sparkline</label>
+      <select id="trend">${['Owned %', 'Price', 'Form', 'xGI', 'Total pts']
+                    .map(t => `<option ${F.trend === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+    <div class="ctl"><label>Show</label><div class="pills">
+      <button class="pill" id="avail" aria-pressed="${F.avail}">Fit only</button>
+      <button class="pill armband" id="mine" aria-pressed="${F.mine}">My squad (${SQUAD.size})</button>
+    </div></div>
+    <div class="reset"><button id="reset">Clear filters</button></div>
+  </div>`;
+        }
+
+        function playersView() {
+            const rows = filtered();
+            if (!rows.length) return `<div class="state"><h2>No players match</h2>
+    <p>Widen the price or ownership range, or clear the filters.</p></div>`;
+
+            const th = (k, l, cls = '') => `<th class="${cls}" data-sort="${k}"
+    ${SORT.key === k ? `data-dir="${SORT.dir}"` : ''}>${l}</th>`;
+
+            return `<div class="count">${rows.length} of ${LATEST.length} players</div>
+  <div class="wrap"><table><thead><tr>
+    ${th('Player', 'Player', 'l')}${th('Team', 'Team', 'l')}${th('Pos', 'Pos', 'l')}
+    ${th('Price', '£m')}<th>Δ</th>
+    ${th('Owned %', 'Own %')}<th>Δ</th>
+    ${th('Form', 'Form')}${th('Total pts', 'Pts')}
+    ${th('xGI', 'xGI', 'hide-sm')}${th('DEFCON per 90', 'DC/90', 'hide-sm')}
+    ${th('Minutes', 'Mins', 'hide-sm')}${th('Exp pts next', 'xPts', 'hide-sm')}
+    <th class="hide-sm">${F.trend.replace('Owned %', 'Own')} trend</th>
+    ${th('Status', 'Status', 'l')}
+  </tr></thead><tbody>
+  ${rows.map(p => `<tr data-id="${p.ID}" class="${SQUAD.has(p.ID) ? 'mine' : ''}${SEL === p.ID ? ' sel' : ''}">
+    <td class="l name">${esc(p.Player)}</td>
+    <td class="l sub">${p.Team}</td><td class="l sub">${p.Pos}</td>
+    <td class="mono">${p.Price?.toFixed(1) ?? '–'}</td>${chip(p.dPrice, 1)}
+    <td class="mono">${fmt(p['Owned %'], 1)}</td>${chip(p.dOwned, 1)}
+    <td class="mono">${fmt(p.Form, 1)}</td>
+    <td class="mono">${p['Total pts'] ?? '–'}</td>
+    <td class="mono hide-sm">${fmt(p.xGI, 2)}</td>
+    <td class="mono hide-sm">${fmt(p['DEFCON per 90'], 1)}</td>
+    <td class="mono hide-sm">${p.Minutes ?? '–'}</td>
+    <td class="mono hide-sm">${fmt(p['Exp pts next'], 1)}</td>
+    <td class="hide-sm">${spark(BY_ID.get(p.ID), F.trend)}</td>
+    <td class="l">${statusTag(p)}</td>
+  </tr>`).join('')}
+  </tbody></table></div>`;
+        }
+
+        function moversView() {
+            if (SNAPS.length < 2) return `<div class="state"><h2>One snapshot so far</h2>
+    <p>Movers compares this week against last. Run the tracker again next week and
+    this fills in.</p></div>`;
+
+            const pool = LATEST.filter(p => p['Owned %'] > 0.5);
+            const block = (title, key, dir) => {
+                const list = [...pool].filter(p => p[key] != null)
+                    .sort((a, b) => dir === 'up' ? b[key] - a[key] : a[key] - b[key]).slice(0, 12);
+                return `<div><div class="count">${title}</div><div class="wrap"><table><tbody>
+      ${list.map(p => `<tr data-id="${p.ID}" class="${SQUAD.has(p.ID) ? 'mine' : ''}">
+        <td class="l name">${esc(p.Player)}</td><td class="l sub">${p.Team} · ${p.Pos}</td>
+        <td class="mono">${p.Price?.toFixed(1)}</td>
+        <td class="mono">${fmt(p['Owned %'], 1)}%</td>
+        ${chip(p[key], key === 'dPrice' ? 1 : 1)}
+      </tr>`).join('')}</tbody></table></div></div>`;
+            };
+            return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--line)">
+    ${block('Ownership rising', 'dOwned', 'up')}${block('Ownership falling', 'dOwned', 'down')}
+    ${block('Price rising', 'dPrice', 'up')}${block('Price falling', 'dPrice', 'down')}
+  </div>`;
+        }
+
+        function teamsView() {
+            const map = new Map();
+            LATEST.forEach(p => {
+                if (!map.has(p.Team)) map.set(p.Team, { Team: p.Team, n: 0, pts: 0, owned: 0, top: null });
+                const t = map.get(p.Team);
+                t.n++; t.pts += p['Total pts'] || 0; t.owned += p['Owned %'] || 0;
+                if (!t.top || (p['Total pts'] || 0) > (t.top['Total pts'] || 0)) t.top = p;
+            });
+            const rows = [...map.values()].sort((a, b) => b.pts - a.pts);
+            return `<div class="count">${rows.length} clubs · ranked by total FPL points scored by their players</div>
+  <div class="wrap"><table><thead><tr>
+    <th class="l">Team</th><th>Players</th><th>Total pts</th><th>Owned % (sum)</th>
+    <th class="l">Top scorer</th><th>Pts</th><th>£m</th>
+  </tr></thead><tbody>
+  ${rows.map(t => `<tr data-id="${t.top.ID}">
+    <td class="l name">${t.Team}</td><td class="mono">${t.n}</td>
+    <td class="mono">${t.pts}</td><td class="mono">${t.owned.toFixed(0)}</td>
+    <td class="l">${esc(t.top.Player)}</td><td class="mono">${t.top['Total pts']}</td>
+    <td class="mono">${t.top.Price?.toFixed(1)}</td>
+  </tr>`).join('')}</tbody></table></div>`;
+        }
+
+        /* ---------- sparkline ---------- */
+        function spark(series, key, w = 90, h = 20) {
+            if (!series || series.length < 2) return `<span class="sub">–</span>`;
+            const v = series.map(r => r[key]).filter(x => x != null);
+            if (v.length < 2) return `<span class="sub">–</span>`;
+            const min = Math.min(...v), max = Math.max(...v), span = (max - min) || 1;
+            const pts = v.map((y, i) => [
+                (i / (v.length - 1)) * (w - 2) + 1,
+                h - 1 - ((y - min) / span) * (h - 2)
+            ]);
+            const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+            const rising = v[v.length - 1] >= v[0];
+            const c = v[v.length - 1] === v[0] ? 'var(--faint)' : (rising ? 'var(--rise)' : 'var(--fall)');
+            const end = pts[pts.length - 1];
+            return `<svg width="${w}" height="${h}" aria-hidden="true" style="vertical-align:middle">
+    <path d="${d}" fill="none" stroke="${c}" stroke-width="1.5"
+      stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${end[0].toFixed(1)}" cy="${end[1].toFixed(1)}" r="2" fill="${c}"/></svg>`;
+        }
+
+        function bigChart(series, key, label) {
+            const v = series.map(r => r[key]).filter(x => x != null);
+            if (v.length < 2) return '';
+            const w = 380, h = 64, min = Math.min(...v), max = Math.max(...v), span = (max - min) || 1;
+            const pts = v.map((y, i) => [(i / (v.length - 1)) * (w - 4) + 2, h - 4 - ((y - min) / span) * (h - 12)]);
+            const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+            const area = `${d} L${pts[pts.length - 1][0].toFixed(1)} ${h} L${pts[0][0].toFixed(1)} ${h} Z`;
+            const rising = v[v.length - 1] >= v[0];
+            const c = rising ? 'var(--rise)' : 'var(--fall)';
+            const change = Math.round((v[v.length - 1] - v[0]) * 100) / 100;
+            return `<div class="chart"><h3>${label}
+    <span class="${change > 0 ? 'up' : change < 0 ? 'down' : 'flat'}">
+      ${change > 0 ? '+' : ''}${change} since ${series[0].Snapshot}</span></h3>
+    <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <path d="${area}" fill="${c}" opacity=".1"/>
+      <path d="${d}" fill="none" stroke="${c}" stroke-width="1.75"
+        stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+    </svg></div>`;
+        }
+
+        /* ---------- drawer ---------- */
+        function openDrawer(id) {
+            SEL = id;
+            const series = BY_ID.get(id), p = LATEST.find(x => x.ID === id);
+            if (!p) return;
+            const dr = document.getElementById('drawer');
+            const st = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+            dr.innerHTML = `<button class="close" id="x" aria-label="Close">×</button>
+    <h2>${esc(p.Player)}</h2>
+    <div class="who">${p.Team} · ${p.Pos} · £${p.Price?.toFixed(1)}m · ${statusTag(p)}</div>
+    <button class="pill armband" id="toggleSquad" aria-pressed="${SQUAD.has(id)}"
+      style="margin-bottom:18px">${SQUAD.has(id) ? 'In my squad' : 'Mark as mine'}</button>
+    <dl class="statgrid">
+      ${st('Points', p['Total pts'] ?? '–')}${st('Form', fmt(p.Form, 1))}${st('PPG', fmt(p.PPG, 1))}
+      ${st('Owned', fmt(p['Owned %'], 1) + '%')}${st('Minutes', p.Minutes ?? '–')}${st('Starts', p.Starts ?? '–')}
+      ${st('Goals', p.Goals ?? '–')}${st('Assists', p.Assists ?? '–')}${st('xGI', fmt(p.xGI, 2))}
+      ${st('DEFCON/90', fmt(p['DEFCON per 90'], 1))}${st('xPts next', fmt(p['Exp pts next'], 1))}
+      ${st('Snapshots', series.length)}
+    </dl>
+    ${series.length < 2 ? `<p class="sub">Charts appear once there are two or more snapshots.</p>` :
+                    bigChart(series, 'Price', 'Price') + bigChart(series, 'Owned %', 'Ownership') +
+                    bigChart(series, 'Form', 'Form') + bigChart(series, 'xGI', 'xGI') +
+                    bigChart(series, 'Total pts', 'Total points')}`;
+            dr.classList.add('open'); dr.setAttribute('aria-hidden', 'false');
+            document.getElementById('x').onclick = closeDrawer;
+            document.getElementById('toggleSquad').onclick = () => {
+                SQUAD.has(id) ? SQUAD.delete(id) : SQUAD.add(id);
+                saveSquad(); render(); openDrawer(id);
+            };
+        }
+        function closeDrawer() {
+            SEL = null;
+            const dr = document.getElementById('drawer');
+            dr.classList.remove('open'); dr.setAttribute('aria-hidden', 'true');
+            render();
+        }
+
+        /* ---------- wiring ---------- */
+        function wire() {
+            const on = (id, ev, fn) => { const el = document.getElementById(id); if (el) el[ev] = fn; };
+            const set = (id, key, e = 'oninput') => on(id, e, ev => { F[key] = ev.target.value; render(); });
+
+            on('search', 'oninput', e => {
+                F.q = e.target.value.toLowerCase(); render();
+                const s = document.getElementById('search');
+                if (s) { s.focus(); s.setSelectionRange(s.value.length, s.value.length); }
+            });
+            ['pmin', 'pmax', 'omin', 'omax', 'mins'].forEach(k => set(k, k));
+            set('team', 'team', 'onchange'); set('trend', 'trend', 'onchange');
+
+            document.querySelectorAll('[data-pos]').forEach(b => b.onclick = () => {
+                const p = b.dataset.pos;
+                F.pos.has(p) ? F.pos.delete(p) : F.pos.add(p); render();
+            });
+            on('avail', 'onclick', () => { F.avail = !F.avail; render(); });
+            on('mine', 'onclick', () => { F.mine = !F.mine; render(); });
+            on('reset', 'onclick', () => {
+                Object.assign(F, { q: '', team: '', pmin: '', pmax: '', omin: '', omax: '', mins: '', avail: false, mine: false });
+                F.pos.clear(); render();
+            });
+
+            document.querySelectorAll('[data-sort]').forEach(th => th.onclick = () => {
+                const k = th.dataset.sort;
+                SORT = { key: k, dir: SORT.key === k && SORT.dir === 'desc' ? 'asc' : 'desc' };
+                render();
+            });
+            document.querySelectorAll('tbody tr[data-id]').forEach(tr =>
+                tr.onclick = () => openDrawer(Number(tr.dataset.id)));
+        }
+
+        document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+            VIEW = b.dataset.view;
+            document.querySelectorAll('nav button').forEach(x =>
+                x.setAttribute('aria-selected', String(x === b)));
+            render();
+        });
+        const ft = document.getElementById('filterToggle');
+        if (ft) ft.onclick = () => {
+            FILTERS_OPEN = !FILTERS_OPEN;
+            ft.setAttribute('aria-expanded', String(FILTERS_OPEN));
+            render();
+        };
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+        /* ---------- helpers ---------- */
+        function fmt(v, d) { return v == null ? '–' : v.toFixed(d); }
+        function esc(s) {
+            return String(s).replace(/[&<>"]/g, c =>
+                ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        }
+        function chip(v, d) {
+            if (v == null) return `<td class="mono flat">·</td>`;
+            const cls = v > 0 ? 'up' : v < 0 ? 'down' : 'flat';
+            return `<td class="mono ${cls}">${v > 0 ? '+' : ''}${v.toFixed(d)}</td>`;
+        }
+        function statusTag(p) {
+            if (p.Status === 'Available') return `<span class="tag ok">–</span>`;
+            const bad = ['Injured', 'Suspended', 'Unavailable'].includes(p.Status);
+            const pct = p['Chance next GW'] != null && p['Chance next GW'] !== '' ? ` ${p['Chance next GW']}%` : '';
+            return `<span class="tag ${bad ? 'bad' : 'warn'}">${p.Status}${pct}</span>`;
+        }
+
+        function renderNoData(msg) {
+            document.getElementById('app').innerHTML = `<div class="state">
+    <h2>${msg ? 'Could not read the data' : 'No data file found'}</h2>
+    <p>${msg || `This page looks for <code>fpl_history.csv</code> next to itself.
+      Run <code>fpl_tracker.py</code> to generate it, then commit both files to the repo.`}</p>
+    <p>Opening this file straight from your disk will also fail — browsers block local
+      file reads. Serve it with <code>python -m http.server</code>, or load the CSV by hand:</p>
+    <label>Choose fpl_history.csv<input type="file" id="pick" accept=".csv"></label></div>`;
+            const pick = document.getElementById('pick');
+            if (pick) pick.onchange = e => {
+                const f = e.target.files[0];
+                if (!f) return;
+                const rd = new FileReader();
+                rd.onload = () => ingest(rd.result);
+                rd.readAsText(f);
+            };
+        }
+    </script>
+</body>
+
+</html>
