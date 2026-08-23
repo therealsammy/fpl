@@ -35,7 +35,7 @@ import streamlit as st
 
 CSV_PATH = Path("fpl_history.csv")
 SQUAD_PATH = Path("squad.json")
-GITHUB_CSV_URL = ""   # e.g. "https://raw.githubusercontent.com/you/repo/main/fpl_history.csv"
+GITHUB_CSV_URL = "https://raw.githubusercontent.com/therealsammy/fpl/refs/heads/main/fpl_history.csv"
 API = "https://fantasy.premierleague.com/api"
 
 NUMERIC = [
