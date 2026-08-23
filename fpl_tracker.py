@@ -72,6 +72,8 @@ SNAPSHOT_FIELDS = [
     "PPG", "Minutes", "Starts", "Goals", "Assists", "xGI", "DEFCON",
     "DEFCON per 90", "Exp pts next", "Status", "Chance next GW",
     "Transfers in (GW)", "Transfers out (GW)", "Price change (GW)",
+    "Pens order", "Corners/IFK order", "Direct FK order",
+    "Rise/fall %", "Change likelihood",
 ]
 
 DELTA_COLS = ("Price", "Owned %", "Form", "Total pts", "xGI")

@@ -20,7 +20,7 @@ concurrency:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check out the repo
@@ -40,6 +40,29 @@ jobs:
           FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
         run: python fpl_tracker.py
 
+      # From here down: analytics built on top of the tracker's snapshot.
+      # Each gets continue-on-error -- a bug or a flaky call in any one of
+      # them must never block fpl_history.csv (irreplaceable) from being
+      # committed below.
+      - name: Run the minutes model
+        continue-on-error: true
+        run: python fpl_minutes.py
+
+      - name: Run the mini-league rival tracker
+        continue-on-error: true
+        env:
+          FPL_LEAGUE_ID: ${{ secrets.FPL_LEAGUE_ID }}
+          FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
+        run: python fpl_rivals.py
+
+      - name: Run the signals digest
+        continue-on-error: true
+        run: python fpl_signals.py
+
+      - name: Run the DEFCON hypothesis test
+        continue-on-error: true
+        run: python fpl_defcon.py
+
       - name: Commit the new snapshot
         run: |
           git config user.name  "github-actions[bot]"
@@ -48,7 +71,17 @@ jobs:
           # Someone may have pushed since checkout; rebase rather than fail.
           git pull --rebase --autostash origin ${{ github.ref_name }} || true
 
-          git add fpl_history.csv fpl_tracker.xlsx
+          # Some of these only exist if their step actually ran and wrote
+          # output (continue-on-error above means a failed step just skips
+          # its file here rather than failing this add).
+          for f in fpl_history.csv fpl_tracker.xlsx \
+                   fpl_minutes.csv fpl_rivals.csv signals.csv \
+                   defcon_report.csv defcon_dataset.csv; do
+            if [ -f "$f" ]; then
+              git add "$f"
+            fi
+          done
+
           if git diff --staged --quiet; then
             echo "No change in the data -- nothing to commit."
           else
@@ -67,5 +100,10 @@ jobs:
           path: |
             fpl_history.csv
             fpl_tracker.xlsx
+            fpl_minutes.csv
+            fpl_rivals.csv
+            signals.csv
+            defcon_report.csv
+            defcon_dataset.csv
           retention-days: 90
           if-no-files-found: warn

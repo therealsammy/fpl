@@ -1,2 +1,9 @@
 /.venv
 /~$fpl_tracker.xlsx
+.env
+__pycache__/
+.pytest_cache/
+
+claude-code-brief-odds.md
+claude-code-brief-projections.md
+claude-code-brief.md

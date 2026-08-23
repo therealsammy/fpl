@@ -1,0 +1,77 @@
+name: FPL odds collection
+
+# Friday 14:00 UTC -- after most pressers, before Saturday deadlines. Odds
+# go stale fast, so this does NOT belong on the Tuesday tracker schedule.
+# Note: UK clocks change in late October, so the UTC/UK-local gap shifts by
+# an hour mid-season. 14:00 UTC stays safely ahead of an 11:00 UK Saturday
+# deadline either way.
+on:
+  schedule:
+    - cron: '0 14 * * 5'
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+# The job pushes a commit back, so it needs write access to the repo.
+permissions:
+  contents: write
+
+# If a manual run overlaps the scheduled one, let the first finish.
+concurrency:
+  group: fpl-odds
+  cancel-in-progress: false
+
+jobs:
+  odds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run the odds collector
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python fpl_odds.py
+
+      - name: Commit the new odds snapshot
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Someone may have pushed since checkout; rebase rather than fail.
+          git pull --rebase --autostash origin ${{ github.ref_name }} || true
+
+          # fixture_projections.csv is append-only too (not disposable) --
+          # phase 6's validator needs past projections to survive so it can
+          # compare them against actual results once the gameweek finishes.
+          git add fpl_odds.csv fixture_projections.csv odds_raw/
+          if git diff --staged --quiet; then
+            echo "No change in the data -- nothing to commit."
+          else
+            git commit -m "FPL odds snapshot $(date -u +%Y-%m-%d)"
+            git push
+            echo "Snapshot committed."
+          fi
+
+      # Belt and braces: if the push ever fails, the data still survives
+      # as a downloadable artifact you can recover by hand.
+      - name: Keep a backup copy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fpl-odds-${{ github.run_number }}
+          path: |
+            fpl_odds.csv
+            fixture_projections.csv
+            odds_raw/
+          retention-days: 90
+          if-no-files-found: warn

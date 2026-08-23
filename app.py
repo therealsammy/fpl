@@ -29,6 +29,8 @@ import pandas as pd
 import requests
 import streamlit as st
 
+import fpl_rivals as fr
+
 # ---------------------------------------------------------------------------
 # CONFIG
 # ---------------------------------------------------------------------------
@@ -37,6 +39,12 @@ CSV_PATH = Path("fpl_history.csv")
 SQUAD_PATH = Path("squad.json")
 GITHUB_CSV_URL = "https://raw.githubusercontent.com/therealsammy/fpl/refs/heads/main/fpl_history.csv"
 API = "https://fantasy.premierleague.com/api"
+
+MINUTES_PATH = Path("fpl_minutes.csv")
+RIVALS_PATH = Path("fpl_rivals.csv")
+SIGNALS_PATH = Path("signals.csv")
+DEFCON_REPORT_PATH = Path("defcon_report.csv")
+PROJECTIONS_PATH = Path("fixture_projections.csv")
 
 NUMERIC = [
     "GW", "Price", "Owned %", "Form", "Total pts", "GW pts", "PPG", "Minutes",
@@ -69,6 +77,19 @@ def load_url(url: str) -> pd.DataFrame:
     r.raise_for_status()
     from io import StringIO
     return _clean(pd.read_csv(StringIO(r.text)))
+
+
+@st.cache_data(ttl=900, show_spinner=False)
+def _load_side_csv(path_str: str, mtime: float) -> pd.DataFrame:
+    return pd.read_csv(Path(path_str))
+
+
+def load_side(path: Path) -> pd.DataFrame | None:
+    """Any of the phase 1-5 outputs. None if the file doesn't exist yet --
+    every page below treats that as 'run the script', not an error."""
+    if not path.exists():
+        return None
+    return _load_side_csv(str(path), path.stat().st_mtime)
 
 
 def _clean(df: pd.DataFrame) -> pd.DataFrame:
@@ -477,6 +498,184 @@ def page_squad(df, cur, squad):
                         use_container_width=True)
 
 
+def page_rivals(df, cur, squad):
+    st.header("Mini-league rivals")
+    rivals = load_side(RIVALS_PATH)
+    if rivals is None or rivals.empty:
+        st.info("No data yet. Run `python fpl_rivals.py` (needs FPL_LEAGUE_ID set) "
+                "once a gameweek's transfer deadline has passed.")
+        return
+
+    latest_snap = rivals["Snapshot"].max()
+    gw_data = rivals[rivals["Snapshot"] == latest_snap]
+    gw_data["Captain"] = gw_data["Captain"].astype(bool)
+    latest_gw = int(gw_data["GW"].iloc[0])
+    st.caption(f"GW{latest_gw} · {gw_data['Entry ID'].nunique()} manager(s) · snapshot {latest_snap}")
+
+    standings = (gw_data[["Entry ID", "Manager", "Team name", "Rank", "Total points"]]
+                 .drop_duplicates().sort_values("Rank"))
+    st.subheader("Standings")
+    st.dataframe(standings, width="stretch", hide_index=True)
+
+    names = cur.set_index("ID")[["Player", "Team"]]
+
+    def enrich(d: pd.DataFrame) -> pd.DataFrame:
+        if d.empty:
+            return d
+        d = d.join(names, on="Player ID")
+        cols = ["Player", "Team"] + [c for c in d.columns if c not in ("Player", "Team")]
+        return d[cols]
+
+    st.subheader("Effective ownership (this league)")
+    st.caption("Owned % + Captained %, as a share of this league only -- not the global game.")
+    eff = fr.compute_effective_ownership(gw_data)
+    st.dataframe(enrich(eff).head(20), width="stretch", hide_index=True)
+
+    my_entry_id = fr.ENTRY_ID
+    unique_to_me, missing_for_me = fr.compute_differentials(gw_data, my_entry_id)
+    a, b = st.columns(2)
+    a.subheader(f"Only you own ({len(unique_to_me)})")
+    a.dataframe(enrich(unique_to_me), width="stretch", hide_index=True)
+    b.subheader("Rivals own, you don't (top 10)")
+    b.dataframe(enrich(missing_for_me).head(10), width="stretch", hide_index=True)
+
+    st.subheader("Captain divergence")
+    captain = fr.compute_captain_divergence(gw_data, my_entry_id)
+    if captain["my_captain"] is None:
+        st.info("Your picks weren't available in this run -- can't compare captains.")
+    else:
+        my_name = names["Player"].get(captain["my_captain"], f"#{captain['my_captain']}")
+        field_name = names["Player"].get(captain["field_top_captain"], f"#{captain['field_top_captain']}")
+        msg = (f"You captained **{my_name}**. Field's top pick: **{field_name}** "
+               f"({captain['field_top_count']}/{captain['field_total']}, {captain['field_top_pct']}%).")
+        if captain["diverges"]:
+            st.warning(msg)
+        else:
+            st.success(msg)
+
+
+def page_signals(df, cur, squad):
+    st.header("Signals")
+    sig = load_side(SIGNALS_PATH)
+    if sig is None or sig.empty:
+        st.info("No data yet. Run `python fpl_signals.py` after the tracker.")
+        return
+
+    latest_snap = sig["Snapshot"].max()
+    latest = sig[sig["Snapshot"] == latest_snap]
+    st.caption(f"Snapshot {latest_snap} · GW{int(latest['GW'].iloc[0])}")
+
+    st.subheader("Set-piece changes")
+    setpiece = latest[latest["Signal"] == "Set-piece change"]
+    if setpiece.empty:
+        st.info("No changes detected this run.")
+    else:
+        st.dataframe(setpiece[["Player", "Team", "Metric", "Old value", "New value", "Note"]],
+                     width="stretch", hide_index=True)
+
+    st.subheader("Price momentum watch")
+    st.caption("Tiebreaker only -- never a standalone buy/sell reason.")
+    price = latest[latest["Signal"] == "Price momentum"]
+    if price.empty:
+        st.info("No players close to a price change.")
+    else:
+        st.dataframe(
+            price[["Player", "Team", "New value", "Note"]]
+            .rename(columns={"New value": "Rise/fall %"})
+            .sort_values("Rise/fall %", key=lambda s: s.abs(), ascending=False),
+            width="stretch", hide_index=True)
+
+    st.subheader("Fixture-adjusted form")
+    form = latest[latest["Signal"] == "Fixture-adjusted form"].copy()
+    if form.empty:
+        st.info("No data (no minutes played yet, or fixtures unavailable).")
+    else:
+        form = form.rename(columns={"Old value": "Form", "New value": "Fixture-adjusted form"})
+        top_n = st.slider("Show top N", 5, 50, 15)
+        st.dataframe(
+            form.nlargest(top_n, "Fixture-adjusted form")[
+                ["Player", "Team", "Form", "Fixture-adjusted form", "Note"]],
+            width="stretch", hide_index=True)
+
+
+def page_odds(df, cur, squad):
+    st.header("Fixture projections")
+    st.caption("Derived from bookmaker odds via a Dixon-Coles Poisson fit. Not wired into "
+               "player rankings yet -- this gets validated against reality first.")
+    proj = load_side(PROJECTIONS_PATH)
+    if proj is None or proj.empty:
+        st.info("No data yet. Run `python fpl_odds.py` (needs ODDS_API_KEY set).")
+        return
+
+    latest_snap = proj["Snapshot"].max()
+    latest = proj[proj["Snapshot"] == latest_snap].copy()
+    gws = sorted(g for g in latest["GW"].dropna().unique())
+    gw = st.selectbox("Gameweek", gws) if gws else None
+    view = latest[latest["GW"] == gw] if gw is not None else latest
+    st.caption(f"Snapshot {latest_snap}")
+
+    view["Clean sheet %"] = (view["Clean sheet probability"] * 100).round(1)
+    view["Win %"] = (view["Win probability"] * 100).round(1)
+    view["Draw %"] = (view["Draw probability"] * 100).round(1)
+    view["Loss %"] = (view["Loss probability"] * 100).round(1)
+
+    cols = ["Team", "Opponent", "Home", "Expected goals for", "Expected goals against",
+            "Clean sheet %", "Win %", "Draw %", "Loss %"]
+    st.dataframe(view[cols].sort_values("Expected goals for", ascending=False),
+                 width="stretch", hide_index=True,
+                 column_config={
+                     "Expected goals for": st.column_config.NumberColumn(format="%.2f"),
+                     "Expected goals against": st.column_config.NumberColumn(format="%.2f"),
+                 })
+
+    st.subheader("Best clean sheet bets")
+    st.dataframe(view.nlargest(8, "Clean sheet %")[["Team", "Opponent", "Home", "Clean sheet %"]],
+                 width="stretch", hide_index=True)
+
+
+def page_models(df, cur, squad):
+    st.header("Minutes model & DEFCON test")
+
+    st.subheader("Start probability")
+    minutes = load_side(MINUTES_PATH)
+    if minutes is None or minutes.empty:
+        st.info("No data yet. Run `python fpl_minutes.py` after the tracker.")
+    else:
+        latest = minutes[minutes["Snapshot"] == minutes["Snapshot"].max()]
+        n_ready = int((latest["Classification"] != "Insufficient data").sum())
+        if n_ready == 0:
+            note = latest["Note"].iloc[0] if "Note" in latest.columns and not latest.empty else ""
+            st.warning(f"Dormant: {note} Expected early in the season.")
+        else:
+            st.caption(f"{n_ready} of {len(latest)} players have a start probability this run.")
+        classes = sorted(latest["Classification"].unique())
+        default = [c for c in ["Nailed", "Rotation risk"] if c in classes]
+        chosen = st.multiselect("Classification", classes, default=default)
+        view = latest[latest["Classification"].isin(chosen)] if chosen else latest
+        cols = ["Player", "Team", "Pos", "Classification", "Start probability",
+                "Start rate (recent)", "Start rate (overall)", "Minutes per appearance", "Note"]
+        st.dataframe(
+            view[[c for c in cols if c in view.columns]]
+            .sort_values("Start probability", ascending=False, na_position="last"),
+            width="stretch", hide_index=True, height=400)
+
+    st.divider()
+    st.subheader("DEFCON vs opponent territory")
+    st.caption("A hypothesis test, not a feature. Tracked over time as more data arrives.")
+    report = load_side(DEFCON_REPORT_PATH)
+    if report is None or report.empty:
+        st.info("No data yet. Run `python fpl_defcon.py` after the tracker.")
+    else:
+        latest_row = report.sort_values("Snapshot").iloc[-1]
+        st.info(latest_row["Verdict"])
+        a, b, c = st.columns(3)
+        a.metric("Sample size", int(latest_row["n"]))
+        b.metric("Pearson r", latest_row["Pearson r"] if pd.notna(latest_row["Pearson r"]) else "—")
+        c.metric("Spearman rho", latest_row["Spearman rho"] if pd.notna(latest_row["Spearman rho"]) else "—")
+        with st.expander("Report history"):
+            st.dataframe(report, width="stretch", hide_index=True)
+
+
 def page_analysis(df, cur, squad):
     st.header("Analysis")
     view = sidebar_filters(cur, squad, "an")
@@ -691,6 +890,10 @@ PAGES = {
     "Movers": page_movers,
     "Teams": page_teams,
     "My squad": page_squad,
+    "Rivals": page_rivals,
+    "Signals": page_signals,
+    "Fixture projections": page_odds,
+    "Models": page_models,
     "Analysis": page_analysis,
     "Live": page_live,
 }
