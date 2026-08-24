@@ -5,6 +5,7 @@
 requests
 pandas
 numpy
+pyarrow
 openpyxl
 streamlit
 pytest
