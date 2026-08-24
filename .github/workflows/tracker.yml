@@ -40,6 +40,14 @@ jobs:
           FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
         run: python collectors/fpl_tracker.py
 
+      # -m, not a bare file path: this imports core.ids, a sibling
+      # package, which only resolves with the repo root on sys.path.
+      # Weekly, not daily -- rosters don't change day to day the way
+      # prices do.
+      - name: Refresh the ID registry
+        continue-on-error: true
+        run: python -m collectors.fpl_ids
+
       # From here down: analytics built on top of the tracker's snapshot.
       # Each gets continue-on-error -- a bug or a flaky call in any one of
       # them must never block fpl_history.csv (irreplaceable) from being
@@ -88,6 +96,9 @@ jobs:
               git add "$f"
             fi
           done
+          if [ -d data/ids ]; then
+            git add data/ids/
+          fi
 
           if git diff --staged --quiet; then
             echo "No change in the data -- nothing to commit."
@@ -113,5 +124,6 @@ jobs:
             defcon_report.csv
             defcon_dataset.csv
             validate_report.csv
+            data/ids/
           retention-days: 90
           if-no-files-found: warn
