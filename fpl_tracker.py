@@ -69,8 +69,8 @@ STATUS = {
 # Point-in-time fields. These are the ones the API will never give back.
 SNAPSHOT_FIELDS = [
     "Player", "Team", "Pos", "Price", "Owned %", "Form", "Total pts", "GW pts",
-    "PPG", "Minutes", "Starts", "Goals", "Assists", "xGI", "DEFCON",
-    "DEFCON per 90", "Exp pts next", "Status", "Chance next GW",
+    "PPG", "Minutes", "Starts", "Goals", "Assists", "xG", "xA", "xGI", "DEFCON",
+    "DEFCON per 90", "Bonus", "Exp pts next", "Status", "Chance next GW",
     "Transfers in (GW)", "Transfers out (GW)", "Price change (GW)",
     "Pens order", "Corners/IFK order", "Direct FK order",
     "Rise/fall %", "Change likelihood",
