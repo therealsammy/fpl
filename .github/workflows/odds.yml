@@ -1,4 +1,4 @@
-name: FPL odds collection
+name: FPL odds and projections
 
 # Friday 14:00 UTC -- after most pressers, before Saturday deadlines. Odds
 # go stale fast, so this does NOT belong on the Tuesday tracker schedule.
@@ -37,12 +37,25 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # Ordering matters: minutes, then odds, then projections. Each gets
+      # continue-on-error -- a stale minutes model or a flaky odds call
+      # must never block whatever the later steps CAN still produce, and
+      # must never block the commit step from saving what did succeed.
+      - name: Refresh the minutes model
+        continue-on-error: true
+        run: python fpl_minutes.py
+
       - name: Run the odds collector
+        continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
         run: python fpl_odds.py
 
-      - name: Commit the new odds snapshot
+      - name: Run player projections
+        continue-on-error: true
+        run: python fpl_projections.py
+
+      - name: Commit the new odds and projections snapshot
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -50,14 +63,23 @@ jobs:
           # Someone may have pushed since checkout; rebase rather than fail.
           git pull --rebase --autostash origin ${{ github.ref_name }} || true
 
-          # fixture_projections.csv is append-only too (not disposable) --
-          # phase 6's validator needs past projections to survive so it can
-          # compare them against actual results once the gameweek finishes.
-          git add fpl_odds.csv fixture_projections.csv odds_raw/
+          # fixture_projections.csv and projections.csv are append-only too
+          # (not disposable) -- phase 6's validator needs past projections
+          # to survive so it can compare them against actual results once
+          # the gameweek finishes.
+          for f in fpl_minutes.csv fpl_odds.csv fixture_projections.csv projections.csv; do
+            if [ -f "$f" ]; then
+              git add "$f"
+            fi
+          done
+          if [ -d odds_raw ]; then
+            git add odds_raw/
+          fi
+
           if git diff --staged --quiet; then
             echo "No change in the data -- nothing to commit."
           else
-            git commit -m "FPL odds snapshot $(date -u +%Y-%m-%d)"
+            git commit -m "FPL odds and projections snapshot $(date -u +%Y-%m-%d)"
             git push
             echo "Snapshot committed."
           fi
@@ -70,8 +92,10 @@ jobs:
         with:
           name: fpl-odds-${{ github.run_number }}
           path: |
+            fpl_minutes.csv
             fpl_odds.csv
             fixture_projections.csv
+            projections.csv
             odds_raw/
           retention-days: 90
           if-no-files-found: warn

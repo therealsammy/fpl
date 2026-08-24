@@ -30,6 +30,7 @@ import requests
 import streamlit as st
 
 import fpl_rivals as fr
+import fpl_projections as fpr
 
 # ---------------------------------------------------------------------------
 # CONFIG
@@ -44,7 +45,8 @@ MINUTES_PATH = Path("fpl_minutes.csv")
 RIVALS_PATH = Path("fpl_rivals.csv")
 SIGNALS_PATH = Path("signals.csv")
 DEFCON_REPORT_PATH = Path("defcon_report.csv")
-PROJECTIONS_PATH = Path("fixture_projections.csv")
+PROJECTIONS_PATH = Path("fixture_projections.csv")     # phase 5: fixture-level xG/clean sheet
+PLAYER_PROJECTIONS_PATH = Path("projections.csv")       # phase 7: per-player expected points
 
 NUMERIC = [
     "GW", "Price", "Owned %", "Form", "Total pts", "GW pts", "PPG", "Minutes",
@@ -163,6 +165,19 @@ def latest_with_deltas(df: pd.DataFrame, back: int = 1) -> pd.DataFrame:
     return cur.reset_index()
 
 
+def attach_projections(cur: pd.DataFrame) -> pd.DataFrame:
+    """Left-joins the latest phase-7 projections onto the Players table.
+    A no-op (silently) whenever the readiness gate hasn't opened yet --
+    the columns just won't exist, which the Players page already handles."""
+    proj = load_side(PLAYER_PROJECTIONS_PATH)
+    if proj is None or proj.empty:
+        return cur
+    latest = proj[proj["Snapshot"] == proj["Snapshot"].max()]
+    cols = latest.set_index("ID")[["Expected points", "Expected points low",
+                                    "Expected points high", "Confidence"]]
+    return cur.join(cols, on="ID")
+
+
 def series_for(df: pd.DataFrame, pid: int) -> pd.DataFrame:
     return df[df["ID"] == pid].sort_values("Snapshot")
 
@@ -225,7 +240,8 @@ def col_config(df: pd.DataFrame) -> dict:
     """Sensible number formatting for st.dataframe."""
     cfg = {}
     money = {"Price", "ΔPrice", "Sell value"}
-    two_dp = {"xGI", "xGI gap", "xGI per 90", "Pts per 90"}
+    two_dp = {"xGI", "xGI gap", "xGI per 90", "Pts per 90",
+              "Expected points", "Expected points low", "Expected points high"}
     for c in df.columns:
         if c in money:
             cfg[c] = st.column_config.NumberColumn(c, format="%.1f")
@@ -289,7 +305,7 @@ def page_players(df, cur, squad):
 
     default = ["Player", "Team", "Pos", "Price", "ΔPrice", "Owned %", "ΔOwned %",
                "Form", "Total pts", "xGI", "xGI gap", "DEFCON per 90", "Minutes",
-               "Exp pts next", "Pts per £m", "Status"]
+               "Exp pts next", "Expected points", "Pts per £m", "Status"]
     available = [c for c in view.columns if c not in {"Snapshot", "Snapshot UTC", "GW finished"}]
     cols = st.multiselect("Columns", available,
                           default=[c for c in default if c in available])
@@ -633,6 +649,56 @@ def page_odds(df, cur, squad):
                  width="stretch", hide_index=True)
 
 
+def page_projections(df, cur, squad):
+    st.header("Player projections")
+    st.caption("Expected points per player for the next gameweek. Dormant until the "
+               "readiness gate opens -- a projection built on too little history is a "
+               "guess with a decimal point on it, so this says exactly what it's waiting for.")
+
+    minutes_df = load_side(MINUTES_PATH)
+    fixture_proj = load_side(PROJECTIONS_PATH)
+    target_gw = fpr.determine_target_gw(fixture_proj)
+    problems = fpr.check_readiness(df, minutes_df, fixture_proj, target_gw)
+
+    if problems:
+        st.warning("Not ready yet -- missing:")
+        for p in problems:
+            st.markdown(f"- {p}")
+        st.info("This is the readiness gate working as intended, not an error.")
+        return
+
+    proj = load_side(PLAYER_PROJECTIONS_PATH)
+    if proj is None or proj.empty:
+        st.info("The gate is open but `projections.csv` doesn't exist yet -- "
+                "run `python fpl_projections.py`.")
+        return
+
+    latest_snap = proj["Snapshot"].max()
+    latest = proj[proj["Snapshot"] == latest_snap]
+    n_low = int((latest["Confidence"] == "Low").sum())
+    st.caption(f"GW{int(latest['GW'].iloc[0])} · snapshot {latest_snap} · "
+               f"{len(latest)} player(s) · {n_low} low-confidence")
+
+    pos_filter = st.multiselect("Position", POS_ORDER)
+    view = latest[latest["Pos"].isin(pos_filter)] if pos_filter else latest
+
+    cols = ["Player", "Team", "Pos", "Price", "Start probability", "Expected points",
+            "Expected points low", "Expected points high", "Expected points per million",
+            "Confidence", "Note"]
+    st.dataframe(view[[c for c in cols if c in view.columns]]
+                 .sort_values("Expected points", ascending=False),
+                 width="stretch", hide_index=True, height=500,
+                 column_config=col_config(view))
+
+    with st.expander("Component breakdown"):
+        st.caption("Each term's contribution to the total -- so a surprising number "
+                   "can be traced to which component caused it.")
+        comp_cols = ["Player", "Team", "Appearance pts", "Goals pts", "Assists pts",
+                     "Clean sheet pts", "DEFCON pts", "Bonus pts", "Save pts"]
+        st.dataframe(view[[c for c in comp_cols if c in view.columns]].sort_values("Player"),
+                     width="stretch", hide_index=True)
+
+
 def page_models(df, cur, squad):
     st.header("Minutes model & DEFCON test")
 
@@ -893,6 +959,7 @@ PAGES = {
     "Rivals": page_rivals,
     "Signals": page_signals,
     "Fixture projections": page_odds,
+    "Projections": page_projections,
     "Models": page_models,
     "Analysis": page_analysis,
     "Live": page_live,
@@ -915,6 +982,7 @@ def main():
 
     squad = load_squad()
     cur = latest_with_deltas(df)
+    cur = attach_projections(cur)
     snaps = sorted(df["Snapshot"].unique())
 
     st.sidebar.markdown("---")
