@@ -3,7 +3,7 @@ import math
 import pandas as pd
 import pytest
 
-import fpl_defcon as fd
+from models import defcon as fd
 
 
 def row(snapshot, gw, finished, pid, player, team, pos, minutes, defcon):

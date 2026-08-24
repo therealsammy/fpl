@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import validate_projections as vp
+from validation import validate_projections as vp
 
 
 def hist_row(snapshot, gw, finished, pid, pos, gw_pts=None, starts=0, exp_pts_next=None):

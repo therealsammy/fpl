@@ -31,6 +31,18 @@ with silently-missing columns would corrupt an archive that can never be
 reconstructed later. Fails quietly (retries, then skips with one clear
 line and exit 0) on network errors -- a transient blip shouldn't page
 anyone or fail the CI run.
+
+Also archives ep_next as a forecast (Phase 1, core/archive.py) -- every
+player's ep_next, every day, tagged with the gameweek it refers to. This
+is the same bootstrap-static/ fetch already made for the light snapshot
+above, so archiving costs nothing extra.
+
+Run this one as a module, not a plain script -- it needs to import
+core.archive, a sibling package, which only resolves correctly if the
+repo root is on sys.path (which -m guarantees; a bare `python
+collectors/fpl_daily_snapshot.py` does not):
+
+    python -m collectors.fpl_daily_snapshot
 """
 
 import sys
@@ -40,6 +52,8 @@ from pathlib import Path
 
 import requests
 import pandas as pd
+
+from core import archive
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -144,6 +158,28 @@ def build_snapshot(boot: dict, snapshot_date: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def build_ep_next_forecast(boot: dict):
+    """
+    One row per player: FPL's own ep_next prediction, tagged with the
+    gameweek it's actually predicting. Returns None (not an empty frame)
+    when there's no "next" gameweek to predict -- between seasons, or
+    after the final gameweek -- since that's a normal state to skip, not
+    a partial forecast to archive.
+    """
+    next_gw = next((e["id"] for e in boot["events"] if e["is_next"]), None)
+    if next_gw is None:
+        return None
+
+    rows = [{
+        "target_event": next_gw,
+        "entity_id": e["id"],
+        "entity_type": "player",
+        "metric": "ep_next",
+        "value": _num(e["ep_next"]),
+    } for e in boot["elements"]]
+    return pd.DataFrame(rows)
+
+
 # ---------------------------------------------------------------------------
 # MAIN
 # ---------------------------------------------------------------------------
@@ -162,6 +198,13 @@ def main():
     snapshot.to_parquet(out_path, index=False)
 
     print(f"fpl_daily_snapshot: {len(snapshot)} players -> {out_path}")
+
+    forecast = build_ep_next_forecast(boot)
+    if forecast is None:
+        print("fpl_daily_snapshot: no upcoming gameweek to forecast -- skipping ep_next archive.")
+    else:
+        forecast_path = archive.write_forecast("fpl_ep_next", today, forecast)
+        print(f"fpl_daily_snapshot: {len(forecast)} ep_next forecast(s) -> {forecast_path}")
 
 
 if __name__ == "__main__":

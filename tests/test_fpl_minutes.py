@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import fpl_minutes as fm
+from models import minutes as fm
 
 
 def row(snapshot, gw, finished, pid, player, team, pos, minutes, starts, chance=None):

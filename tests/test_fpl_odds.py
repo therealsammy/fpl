@@ -3,7 +3,7 @@ import math
 import pandas as pd
 import pytest
 
-import fpl_odds as fo
+from collectors import fpl_odds as fo
 
 
 # ---------------------------------------------------------------------------

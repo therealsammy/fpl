@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import fpl_signals as fs
+from models import signals as fs
 
 
 def row(snapshot, gw, pid, player, team, pens=None, corners=None, fk=None,

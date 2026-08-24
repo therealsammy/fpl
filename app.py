@@ -29,8 +29,8 @@ import pandas as pd
 import requests
 import streamlit as st
 
-import fpl_rivals as fr
-import fpl_projections as fpr
+from collectors import fpl_rivals as fr
+from models import projections as fpr
 
 # ---------------------------------------------------------------------------
 # CONFIG

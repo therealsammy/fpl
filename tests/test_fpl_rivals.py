@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import fpl_rivals as fr
+from collectors import fpl_rivals as fr
 
 
 def picks(entries):

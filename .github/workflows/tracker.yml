@@ -38,7 +38,7 @@ jobs:
       - name: Run the tracker
         env:
           FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
-        run: python fpl_tracker.py
+        run: python collectors/fpl_tracker.py
 
       # From here down: analytics built on top of the tracker's snapshot.
       # Each gets continue-on-error -- a bug or a flaky call in any one of
@@ -46,29 +46,29 @@ jobs:
       # committed below.
       - name: Run the minutes model
         continue-on-error: true
-        run: python fpl_minutes.py
+        run: python models/minutes.py
 
       - name: Run the mini-league rival tracker
         continue-on-error: true
         env:
           FPL_LEAGUE_ID: ${{ secrets.FPL_LEAGUE_ID }}
           FPL_ENTRY_ID: ${{ secrets.FPL_ENTRY_ID }}
-        run: python fpl_rivals.py
+        run: python collectors/fpl_rivals.py
 
       - name: Run the signals digest
         continue-on-error: true
-        run: python fpl_signals.py
+        run: python models/signals.py
 
       - name: Run the DEFCON hypothesis test
         continue-on-error: true
-        run: python fpl_defcon.py
+        run: python models/defcon.py
 
       # Once the tracker confirms a gameweek finished, that's the moment
       # its actual results become knowable -- so validation belongs on
       # this schedule, not the pre-deadline Friday one.
       - name: Validate projections against actual results
         continue-on-error: true
-        run: python validate_projections.py
+        run: python validation/validate_projections.py
 
       - name: Commit the new snapshot
         run: |

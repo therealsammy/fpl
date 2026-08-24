@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import fpl_projections as fp
+from models import projections as fp
 
 
 def hist_row(snapshot, gw, finished, pid, player, team, pos, price=6.0,

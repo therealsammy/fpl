@@ -36,8 +36,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # -m, not a bare file path: this script imports core.archive (a
+      # sibling package), which only resolves if the repo root is on
+      # sys.path -- module invocation guarantees that, a plain
+      # `python collectors/fpl_daily_snapshot.py` does not.
       - name: Run the daily snapshot
-        run: python fpl_daily_snapshot.py
+        run: python -m collectors.fpl_daily_snapshot
 
       - name: Commit the new snapshot
         run: |
@@ -47,7 +51,7 @@ jobs:
           # Someone may have pushed since checkout; rebase rather than fail.
           git pull --rebase --autostash origin ${{ github.ref_name }} || true
 
-          git add data/fpl/snapshots/
+          git add data/fpl/snapshots/ data/forecasts/
           if git diff --staged --quiet; then
             echo "No change in the data -- nothing to commit (or the fetch was skipped)."
           else

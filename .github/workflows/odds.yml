@@ -43,17 +43,17 @@ jobs:
       # must never block the commit step from saving what did succeed.
       - name: Refresh the minutes model
         continue-on-error: true
-        run: python fpl_minutes.py
+        run: python models/minutes.py
 
       - name: Run the odds collector
         continue-on-error: true
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-        run: python fpl_odds.py
+        run: python collectors/fpl_odds.py
 
       - name: Run player projections
         continue-on-error: true
-        run: python fpl_projections.py
+        run: python models/projections.py
 
       - name: Commit the new odds and projections snapshot
         run: |

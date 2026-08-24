@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import pytest
 
-import fpl_daily_snapshot as fds
+from collectors import fpl_daily_snapshot as fds
 
 
 def element(id_=1, web_name="Salah", team=1, element_type=3, now_cost=130,
@@ -16,9 +16,13 @@ def element(id_=1, web_name="Salah", team=1, element_type=3, now_cost=130,
     }
 
 
-def boot(elements):
+def boot(elements, events=None):
     return {"elements": elements, "teams": [{"id": 1, "short_name": "LIV"},
-                                             {"id": 2, "short_name": "ARS"}]}
+                                             {"id": 2, "short_name": "ARS"}],
+            "events": events if events is not None else [
+                {"id": 5, "is_next": False, "is_current": True, "finished": False},
+                {"id": 6, "is_next": True, "is_current": False, "finished": False},
+            ]}
 
 
 # ---------------------------------------------------------------------------
@@ -189,3 +193,33 @@ def test_snapshot_written_to_parquet_has_matching_schema_on_rerun(tmp_path):
     assert list(result.columns) == list(df1.columns)
     assert result.iloc[0]["Price"] == pytest.approx(13.5)  # latest write wins, not appended
     assert len(result) == 1  # not duplicated
+
+
+# ---------------------------------------------------------------------------
+# ep_next forecast archiving (Phase 1)
+# ---------------------------------------------------------------------------
+
+def test_build_ep_next_forecast_tags_rows_with_the_next_gameweek():
+    data = boot([element(id_=1, ep_next="7.5"), element(id_=2, ep_next="3.0")])
+    forecast = fds.build_ep_next_forecast(data)
+
+    assert list(forecast.columns) == ["target_event", "entity_id", "entity_type", "metric", "value"]
+    assert (forecast["target_event"] == 6).all()  # the is_next event's id, not is_current's
+    assert (forecast["entity_type"] == "player").all()
+    assert (forecast["metric"] == "ep_next").all()
+    assert sorted(forecast["value"]) == [3.0, 7.5]
+
+
+def test_build_ep_next_forecast_returns_none_when_no_next_gameweek():
+    """Between seasons, or after the final gameweek, there's nothing to
+    forecast -- that's a normal state to skip, not a partial row to write."""
+    data = boot([element()], events=[
+        {"id": 38, "is_next": False, "is_current": True, "finished": True},
+    ])
+    assert fds.build_ep_next_forecast(data) is None
+
+
+def test_build_ep_next_forecast_handles_null_ep_next_gracefully():
+    e = element(ep_next=None)
+    forecast = fds.build_ep_next_forecast(boot([e]))
+    assert forecast.iloc[0]["value"] is None
