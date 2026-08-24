@@ -55,6 +55,19 @@ NUMERIC = [
 ]
 POS_ORDER = ["GKP", "DEF", "MID", "FWD"]
 
+# Validated data-viz reference palette (see the dataviz skill). Categorical
+# hues are used in this fixed order, never cycled or reassigned by filter.
+CATEGORICAL_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
+                      "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+SEQUENTIAL_BLUE = ["#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#104281"]
+DIVERGING_BLUE_RED = ["#104281", "#86b6ef", "#f0efec", "#f0a68a", "#d03b3b"]
+
+# Status colors are reserved for state, never reused as a categorical hue.
+STATUS_COLORS = {"good": "#0ca30c", "warning": "#fab219",
+                 "serious": "#ec835a", "critical": "#d03b3b", "neutral": "#898781"}
+STATUS_BADGE = {"good": "green", "warning": "orange",
+                "serious": "orange", "critical": "red", "neutral": "gray"}
+
 st.set_page_config(page_title="FPL Tracker", page_icon="⚽", layout="wide")
 
 
@@ -116,35 +129,38 @@ def _clean(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_data() -> pd.DataFrame | None:
-    """Resolve a data source, preferring local file, then URL, then upload."""
-    src = st.sidebar.radio(
-        "Data source",
-        ["Local file", "GitHub URL", "Upload"],
-        help="Local reads ./fpl_history.csv next to this app.",
-    )
-    try:
-        if src == "Local file":
-            if not CSV_PATH.exists():
-                st.sidebar.error(f"{CSV_PATH} not found.")
-                return None
-            return load_csv(None, CSV_PATH.stat().st_mtime)
+    """Resolve a data source, preferring local file, then URL, then upload.
+    Collapsed by default -- the common case (local file) needs no attention,
+    so this shouldn't compete with page filters for sidebar space."""
+    with st.sidebar.expander("Data source", expanded=False):
+        src = st.radio(
+            "Source", ["Local file", "GitHub URL", "Upload"],
+            help="Local reads ./fpl_history.csv next to this app.",
+            label_visibility="collapsed",
+        )
+        try:
+            if src == "Local file":
+                if not CSV_PATH.exists():
+                    st.error(f"{CSV_PATH} not found.")
+                    return None
+                return load_csv(None, CSV_PATH.stat().st_mtime)
 
-        if src == "GitHub URL":
-            url = st.sidebar.text_input("Raw CSV URL", value=GITHUB_CSV_URL,
-                                        placeholder="https://raw.githubusercontent.com/...")
-            if not url:
-                st.sidebar.info("Paste a raw.githubusercontent.com link.")
-                return None
-            return load_url(url)
+            if src == "GitHub URL":
+                url = st.text_input("Raw CSV URL", value=GITHUB_CSV_URL,
+                                    placeholder="https://raw.githubusercontent.com/...")
+                if not url:
+                    st.info("Paste a raw.githubusercontent.com link.")
+                    return None
+                return load_url(url)
 
-        up = st.sidebar.file_uploader("fpl_history.csv", type="csv")
-        if up is None:
+            up = st.file_uploader("fpl_history.csv", type="csv")
+            if up is None:
+                return None
+            return load_csv(up.getvalue().decode("utf-8"), None)
+
+        except Exception as exc:
+            st.error(f"Could not read data: {exc}")
             return None
-        return load_csv(up.getvalue().decode("utf-8"), None)
-
-    except Exception as exc:
-        st.sidebar.error(f"Could not read data: {exc}")
-        return None
 
 
 def latest_with_deltas(df: pd.DataFrame, back: int = 1) -> pd.DataFrame:
@@ -225,10 +241,12 @@ def line(data: pd.DataFrame, metric: str, color: str | None = None, height: int 
 
 
 def scatter(data, x, y, tip, color="Pos", size=None, height=440):
+    color_scale = (alt.Scale(domain=POS_ORDER, range=CATEGORICAL_COLORS[:4])
+                   if color == "Pos" else alt.Undefined)
     enc = dict(
         x=alt.X(f"{x}:Q", scale=alt.Scale(zero=False)),
         y=alt.Y(f"{y}:Q", scale=alt.Scale(zero=False)),
-        color=alt.Color(f"{color}:N", sort=POS_ORDER, title=None),
+        color=alt.Color(f"{color}:N", sort=POS_ORDER, title=None, scale=color_scale),
         tooltip=tip,
     )
     if size:
@@ -248,9 +266,48 @@ def col_config(df: pd.DataFrame) -> dict:
         elif c in two_dp:
             cfg[c] = st.column_config.NumberColumn(c, format="%.2f")
         elif c in {"Owned %", "ΔOwned %", "Form", "ΔForm", "PPG",
-                   "Exp pts next", "DEFCON per 90", "Pts per £m"}:
+                   "Exp pts next", "DEFCON per 90", "Pts per £m", "Rise/fall %"}:
             cfg[c] = st.column_config.NumberColumn(c, format="%.1f")
     return cfg
+
+
+STATUS_MAPS = {
+    "classification": {
+        "Nailed": "good", "Rotation risk": "warning", "Bench": "serious",
+        "Benchwarmer": "critical", "Insufficient data": "neutral",
+    },
+    "confidence": {"High": "good", "Low": "warning"},
+    "setpiece_direction": {
+        "Gained duty": "good", "Promoted (higher priority)": "good",
+        "Demoted (lower priority)": "warning", "Lost duty": "critical",
+    },
+    "price_direction": {"Rise watch": "good", "Fall watch": "critical"},
+}
+
+
+FPL_GREEN = "#00ff87"
+
+
+def style_own_row(df: pd.DataFrame, id_col: str, my_id, color: str = FPL_GREEN):
+    """Highlights the viewer's own row -- e.g. their entry in a rivals
+    standings table -- so they can find themselves at a glance."""
+    def _paint(row):
+        hit = row[id_col] == my_id
+        return [f"background-color: {color}26; font-weight: 600" if hit else "" for _ in row]
+    return df.style.apply(_paint, axis=1) if id_col in df.columns else df
+
+
+def style_status(df: pd.DataFrame, column: str, mapping: dict):
+    """Tints one column's text/background by a status mapping (good/warning/
+    serious/critical/neutral) -- the reserved status palette, never reused
+    as a categorical hue elsewhere in the app."""
+    def _paint(val):
+        status = mapping.get(val)
+        if status is None:
+            return ""
+        hex_color = STATUS_COLORS[status]
+        return f"background-color: {hex_color}22; color: {hex_color}; font-weight: 600"
+    return df.style.map(_paint, subset=[column]) if column in df.columns else df
 
 
 # ---------------------------------------------------------------------------
@@ -363,7 +420,7 @@ def page_player(df, cur, squad):
             default=["Price", "Owned %", "Form", "xGI"])
         for pair in [metrics[i:i + 2] for i in range(0, len(metrics), 2)]:
             for col, m in zip(st.columns(len(pair)), pair):
-                col.altair_chart(line(s, m), use_container_width=True)
+                col.altair_chart(line(s, m), width="stretch")
 
     with st.expander("All recorded snapshots"):
         st.dataframe(s.drop(columns=["ID"]), width="stretch", hide_index=True)
@@ -401,7 +458,7 @@ def page_compare(df, cur, squad):
                              default=["Total pts", "Form", "Owned %", "xGI"])
     for pair in [metrics[i:i + 2] for i in range(0, len(metrics), 2)]:
         for col, m in zip(st.columns(len(pair)), pair):
-            col.altair_chart(line(sub, m, color="Player"), use_container_width=True)
+            col.altair_chart(line(sub, m, color="Player"), width="stretch")
 
 
 def page_movers(df, cur, squad):
@@ -457,9 +514,9 @@ def page_teams(df, cur, squad):
         alt.Chart(g).mark_bar().encode(
             x=alt.X("Total pts:Q"),
             y=alt.Y("Team:N", sort="-x", title=None),
-            color=alt.Color("Total pts:Q", legend=None, scale=alt.Scale(scheme="viridis")),
+            color=alt.Color("Total pts:Q", legend=None, scale=alt.Scale(range=SEQUENTIAL_BLUE)),
             tooltip=["Team", "Total pts", "Players", "Top scorer"],
-        ).properties(height=520), use_container_width=True)
+        ).properties(height=520), width="stretch")
 
     team = st.selectbox("Squad breakdown", sorted(cur["Team"].unique()))
     sq = cur[cur["Team"] == team].sort_values("Total pts", ascending=False)
@@ -511,7 +568,7 @@ def page_squad(df, cur, squad):
         sub = df[df["ID"].isin(squad)]
         metric = st.selectbox("Metric", ["Total pts", "Form", "Price", "Owned %", "xGI"])
         st.altair_chart(line(sub, metric, color="Player", height=340),
-                        use_container_width=True)
+                        width="stretch")
 
 
 def page_rivals(df, cur, squad):
@@ -531,7 +588,9 @@ def page_rivals(df, cur, squad):
     standings = (gw_data[["Entry ID", "Manager", "Team name", "Rank", "Total points"]]
                  .drop_duplicates().sort_values("Rank"))
     st.subheader("Standings")
-    st.dataframe(standings, width="stretch", hide_index=True)
+    st.caption("Your row is highlighted.")
+    st.dataframe(style_own_row(standings, "Entry ID", fr.ENTRY_ID),
+                 width="stretch", hide_index=True)
 
     names = cur.set_index("ID")[["Player", "Team"]]
 
@@ -544,8 +603,16 @@ def page_rivals(df, cur, squad):
 
     st.subheader("Effective ownership (this league)")
     st.caption("Owned % + Captained %, as a share of this league only -- not the global game.")
-    eff = fr.compute_effective_ownership(gw_data)
-    st.dataframe(enrich(eff).head(20), width="stretch", hide_index=True)
+    eff = enrich(fr.compute_effective_ownership(gw_data)).head(15)
+    if not eff.empty:
+        st.altair_chart(
+            alt.Chart(eff).mark_bar(color=CATEGORICAL_COLORS[0], size=14).encode(
+                x=alt.X("Effective ownership %:Q"),
+                y=alt.Y("Player:N", sort="-x", title=None),
+                tooltip=["Player", "Team", "Owned %", "Captained %", "Effective ownership %"],
+            ).properties(height=max(120, 24 * len(eff))),
+            width="stretch")
+    st.dataframe(eff, width="stretch", hide_index=True)
 
     my_entry_id = fr.ENTRY_ID
     unique_to_me, missing_for_me = fr.compute_differentials(gw_data, my_entry_id)
@@ -586,20 +653,34 @@ def page_signals(df, cur, squad):
     if setpiece.empty:
         st.info("No changes detected this run.")
     else:
-        st.dataframe(setpiece[["Player", "Team", "Metric", "Old value", "New value", "Note"]],
+        view = setpiece[["Player", "Team", "Metric", "Old value", "New value", "Note"]]
+        st.dataframe(style_status(view, "Note", STATUS_MAPS["setpiece_direction"]),
                      width="stretch", hide_index=True)
 
     st.subheader("Price momentum watch")
     st.caption("Tiebreaker only -- never a standalone buy/sell reason.")
-    price = latest[latest["Signal"] == "Price momentum"]
+    price = latest[latest["Signal"] == "Price momentum"].copy()
     if price.empty:
         st.info("No players close to a price change.")
     else:
-        st.dataframe(
-            price[["Player", "Team", "New value", "Note"]]
-            .rename(columns={"New value": "Rise/fall %"})
-            .sort_values("Rise/fall %", key=lambda s: s.abs(), ascending=False),
-            width="stretch", hide_index=True)
+        price = price.rename(columns={"New value": "Rise/fall %"})
+        price["Direction"] = price["Note"].str.split(" (", n=1, regex=False).str[0]
+        price = price.sort_values("Rise/fall %", key=lambda s: s.abs(), ascending=False)
+
+        st.altair_chart(
+            alt.Chart(price).mark_bar(size=14).encode(
+                x=alt.X("Rise/fall %:Q", scale=alt.Scale(domain=[-100, 100])),
+                y=alt.Y("Player:N", sort=alt.SortField("Rise/fall %", order="descending"), title=None),
+                color=alt.Color("Direction:N", title=None,
+                                scale=alt.Scale(domain=["Rise watch", "Fall watch"],
+                                                range=[DIVERGING_BLUE_RED[0], DIVERGING_BLUE_RED[-1]])),
+                tooltip=["Player", "Team", alt.Tooltip("Rise/fall %:Q", format=".1f"), "Note"],
+            ).properties(height=max(120, 24 * len(price))),
+            width="stretch")
+
+        view = price[["Player", "Team", "Direction", "Rise/fall %", "Note"]]
+        st.dataframe(style_status(view, "Direction", STATUS_MAPS["price_direction"]),
+                     width="stretch", hide_index=True, column_config=col_config(view))
 
     st.subheader("Fixture-adjusted form")
     form = latest[latest["Signal"] == "Fixture-adjusted form"].copy()
@@ -682,13 +763,24 @@ def page_projections(df, cur, squad):
     pos_filter = st.multiselect("Position", POS_ORDER)
     view = latest[latest["Pos"].isin(pos_filter)] if pos_filter else latest
 
+    st.altair_chart(
+        alt.Chart(view).mark_circle(opacity=0.72).encode(
+            x=alt.X("Price:Q", scale=alt.Scale(zero=False)),
+            y=alt.Y("Expected points:Q", scale=alt.Scale(zero=False)),
+            color=alt.Color("Confidence:N", title=None,
+                            scale=alt.Scale(domain=["High", "Low"],
+                                            range=[STATUS_COLORS["good"], STATUS_COLORS["warning"]])),
+            tooltip=["Player", "Team", "Pos", "Price", "Expected points", "Confidence"],
+        ).properties(height=380).interactive(),
+        width="stretch")
+
     cols = ["Player", "Team", "Pos", "Price", "Start probability", "Expected points",
             "Expected points low", "Expected points high", "Expected points per million",
             "Confidence", "Note"]
-    st.dataframe(view[[c for c in cols if c in view.columns]]
-                 .sort_values("Expected points", ascending=False),
+    table = view[[c for c in cols if c in view.columns]].sort_values("Expected points", ascending=False)
+    st.dataframe(style_status(table, "Confidence", STATUS_MAPS["confidence"]),
                  width="stretch", hide_index=True, height=500,
-                 column_config=col_config(view))
+                 column_config=col_config(table))
 
     with st.expander("Component breakdown"):
         st.caption("Each term's contribution to the total -- so a surprising number "
@@ -714,16 +806,31 @@ def page_models(df, cur, squad):
             st.warning(f"Dormant: {note} Expected early in the season.")
         else:
             st.caption(f"{n_ready} of {len(latest)} players have a start probability this run.")
+        counts = latest["Classification"].value_counts().reindex(
+            ["Nailed", "Rotation risk", "Bench", "Benchwarmer", "Insufficient data"]).dropna().reset_index()
+        counts.columns = ["Classification", "Players"]
+        status_domain = list(STATUS_MAPS["classification"].keys())
+        status_range = [STATUS_COLORS[STATUS_MAPS["classification"][c]] for c in status_domain]
+        st.altair_chart(
+            alt.Chart(counts).mark_bar().encode(
+                x=alt.X("Players:Q"),
+                y=alt.Y("Classification:N", sort=status_domain, title=None),
+                color=alt.Color("Classification:N", legend=None,
+                                scale=alt.Scale(domain=status_domain, range=status_range)),
+                tooltip=["Classification", "Players"],
+            ).properties(height=180),
+            width="stretch")
+
         classes = sorted(latest["Classification"].unique())
         default = [c for c in ["Nailed", "Rotation risk"] if c in classes]
         chosen = st.multiselect("Classification", classes, default=default)
         view = latest[latest["Classification"].isin(chosen)] if chosen else latest
         cols = ["Player", "Team", "Pos", "Classification", "Start probability",
                 "Start rate (recent)", "Start rate (overall)", "Minutes per appearance", "Note"]
-        st.dataframe(
-            view[[c for c in cols if c in view.columns]]
-            .sort_values("Start probability", ascending=False, na_position="last"),
-            width="stretch", hide_index=True, height=400)
+        view = view[[c for c in cols if c in view.columns]].sort_values(
+            "Start probability", ascending=False, na_position="last")
+        st.dataframe(style_status(view, "Classification", STATUS_MAPS["classification"]),
+                     width="stretch", hide_index=True, height=400)
 
     st.divider()
     st.subheader("DEFCON vs opponent territory")
@@ -733,7 +840,14 @@ def page_models(df, cur, squad):
         st.info("No data yet. Run `python fpl_defcon.py` after the tracker.")
     else:
         latest_row = report.sort_values("Snapshot").iloc[-1]
-        st.info(latest_row["Verdict"])
+        verdict_text = str(latest_row["Verdict"])
+        if verdict_text.startswith("Real effect"):
+            st.badge("Real effect", color=STATUS_BADGE["good"])
+        elif verdict_text.startswith("Null result"):
+            st.badge("Null result", color=STATUS_BADGE["critical"])
+        else:
+            st.badge("Insufficient data", color=STATUS_BADGE["neutral"])
+        st.write(verdict_text)
         a, b, c = st.columns(3)
         a.metric("Sample size", int(latest_row["n"]))
         b.metric("Pearson r", latest_row["Pearson r"] if pd.notna(latest_row["Pearson r"]) else "—")
@@ -769,7 +883,7 @@ def page_analysis(df, cur, squad):
             hi = max(d["xGI"].max(), d["G+A"].max())
             ref = alt.Chart(pd.DataFrame({"x": [0, hi]})).mark_line(
                 strokeDash=[5, 5], color="gray").encode(x="x:Q", y="x:Q")
-            st.altair_chart(base + ref, use_container_width=True)
+            st.altair_chart(base + ref, width="stretch")
 
             a, b = st.columns(2)
             a.caption("Underperforming — potential buys")
@@ -787,7 +901,7 @@ def page_analysis(df, cur, squad):
         st.altair_chart(scatter(view, "Price", "Total pts",
                                 ["Player", "Team", "Pos", "Price", "Total pts",
                                  "Pts per £m", "Owned %"], size="Owned %"),
-                        use_container_width=True)
+                        width="stretch")
         st.dataframe(view.nlargest(20, "Pts per £m")[
             ["Player", "Team", "Pos", "Price", "Total pts", "Pts per £m",
              "Owned %", "Minutes", "Status"]],
@@ -799,7 +913,7 @@ def page_analysis(df, cur, squad):
         cap = st.slider("Max ownership %", 1.0, 50.0, 10.0, 0.5)
         st.altair_chart(scatter(view, "Owned %", "Total pts",
                                 ["Player", "Team", "Pos", "Owned %", "Total pts",
-                                 "Price", "Form"]), use_container_width=True)
+                                 "Price", "Form"]), width="stretch")
         d = view[view["Owned %"] <= cap].nlargest(20, "Total pts")
         st.dataframe(d[["Player", "Team", "Pos", "Price", "Owned %", "Total pts",
                         "Form", "xGI", "Minutes", "Status"]],
@@ -949,23 +1063,6 @@ def fetch_fixtures():
 # MAIN
 # ---------------------------------------------------------------------------
 
-PAGES = {
-    "Players": page_players,
-    "Player detail": page_player,
-    "Compare": page_compare,
-    "Movers": page_movers,
-    "Teams": page_teams,
-    "My squad": page_squad,
-    "Rivals": page_rivals,
-    "Signals": page_signals,
-    "Fixture projections": page_odds,
-    "Projections": page_projections,
-    "Models": page_models,
-    "Analysis": page_analysis,
-    "Live": page_live,
-}
-
-
 def main():
     st.sidebar.title("⚽ FPL Tracker")
     df = get_data()
@@ -985,9 +1082,6 @@ def main():
     cur = attach_projections(cur)
     snaps = sorted(df["Snapshot"].unique())
 
-    st.sidebar.markdown("---")
-    choice = st.sidebar.radio("Page", list(PAGES), label_visibility="collapsed")
-    st.sidebar.markdown("---")
     st.sidebar.caption(
         f"**GW{int(cur['GW'].iloc[0])}** · {len(cur)} players\n\n"
         f"{len(snaps)} snapshot{'s' if len(snaps) != 1 else ''}\n\n"
@@ -996,7 +1090,38 @@ def main():
     if len(snaps) == 1:
         st.sidebar.info("First snapshot. Trends and Movers fill in from next week.")
 
-    PAGES[choice](df, cur, squad)
+    # Real URL routing (browser back/forward, shareable links) via
+    # st.navigation -- each page function is unchanged, just wrapped so it
+    # can be called with no arguments the way st.Page requires.
+    pages = {
+        "Core": [
+            st.Page(lambda: page_players(df, cur, squad), title="Players",
+                    url_path="players", default=True),
+            st.Page(lambda: page_player(df, cur, squad), title="Player detail",
+                    url_path="player-detail"),
+            st.Page(lambda: page_compare(df, cur, squad), title="Compare", url_path="compare"),
+            st.Page(lambda: page_movers(df, cur, squad), title="Movers", url_path="movers"),
+            st.Page(lambda: page_teams(df, cur, squad), title="Teams", url_path="teams"),
+            st.Page(lambda: page_squad(df, cur, squad), title="My squad", url_path="my-squad"),
+        ],
+        "League & market": [
+            st.Page(lambda: page_rivals(df, cur, squad), title="Rivals", url_path="rivals"),
+            st.Page(lambda: page_signals(df, cur, squad), title="Signals", url_path="signals"),
+            st.Page(lambda: page_odds(df, cur, squad), title="Fixture projections",
+                    url_path="fixture-projections"),
+        ],
+        "Models": [
+            st.Page(lambda: page_projections(df, cur, squad), title="Projections",
+                    url_path="projections"),
+            st.Page(lambda: page_models(df, cur, squad), title="Models", url_path="models"),
+        ],
+        "Explore": [
+            st.Page(lambda: page_analysis(df, cur, squad), title="Analysis", url_path="analysis"),
+            st.Page(lambda: page_live(df, cur, squad), title="Live", url_path="live"),
+        ],
+    }
+    pg = st.navigation(pages, position="top")
+    pg.run()
 
 
 if __name__ == "__main__":

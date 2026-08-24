@@ -1,0 +1,12 @@
+# Brand accent (primaryColor) is FPL's own purple -- distinctive, reads as
+# "an FPL tool" rather than a generic analytics template. Chart DATA colors
+# (CATEGORICAL_COLORS etc. in app.py) stay on the validated data-viz
+# reference palette -- that's an accessibility property, not a brand choice,
+# so it's untouched here.
+[theme]
+base = "light"
+primaryColor = "#37003c"
+backgroundColor = "#fcfcfb"
+secondaryBackgroundColor = "#f5eef7"
+textColor = "#0b0b0b"
+font = "sans serif"
