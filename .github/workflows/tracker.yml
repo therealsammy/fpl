@@ -63,6 +63,13 @@ jobs:
         continue-on-error: true
         run: python fpl_defcon.py
 
+      # Once the tracker confirms a gameweek finished, that's the moment
+      # its actual results become knowable -- so validation belongs on
+      # this schedule, not the pre-deadline Friday one.
+      - name: Validate projections against actual results
+        continue-on-error: true
+        run: python validate_projections.py
+
       - name: Commit the new snapshot
         run: |
           git config user.name  "github-actions[bot]"
@@ -76,7 +83,7 @@ jobs:
           # its file here rather than failing this add).
           for f in fpl_history.csv fpl_tracker.xlsx \
                    fpl_minutes.csv fpl_rivals.csv signals.csv \
-                   defcon_report.csv defcon_dataset.csv; do
+                   defcon_report.csv defcon_dataset.csv validate_report.csv; do
             if [ -f "$f" ]; then
               git add "$f"
             fi
@@ -105,5 +112,6 @@ jobs:
             signals.csv
             defcon_report.csv
             defcon_dataset.csv
+            validate_report.csv
           retention-days: 90
           if-no-files-found: warn
