@@ -190,6 +190,51 @@ def test_resolve_team_matches_against_registered_teams(tmp_path, monkeypatch):
     assert ids.resolve_team("Arsenal", source="football_data") == "fpl-team-1"
 
 
+def test_resolve_team_records_naming_variant_on_success(tmp_path, monkeypatch):
+    """A successful match should enrich the crosswalk, not just look
+    something up and discard the source's own spelling of the name.
+    Case/whitespace difference -- resolves via the normalized stage,
+    not fuzzy (real team abbreviations like 'Man Utd' vs 'Manchester
+    United' don't clear the fuzzy threshold at all -- verified separately;
+    that's why teams need a curated/normalized lookup, not fuzzy matching)."""
+    monkeypatch.setattr(ids, "TEAMS_PATH", tmp_path / "teams.csv")
+    monkeypatch.setattr(ids, "UNRESOLVED_PATH", tmp_path / "unresolved.csv")
+    ids.register_fpl_teams([{"id": 1, "name": "Nott'm Forest"}])
+
+    ids.resolve_team("NOTT'M FOREST", source="football_data")  # different case
+
+    teams = ids.load_teams()
+    row = teams[teams["canonical_id"] == "fpl-team-1"].iloc[0]
+    assert row["football_data_name"] == "NOTT'M FOREST"
+
+
+def test_resolve_team_does_not_overwrite_an_existing_naming_variant(tmp_path, monkeypatch):
+    monkeypatch.setattr(ids, "TEAMS_PATH", tmp_path / "teams.csv")
+    monkeypatch.setattr(ids, "UNRESOLVED_PATH", tmp_path / "unresolved.csv")
+    ids.register_fpl_teams([{"id": 1, "name": "Nott'm Forest"}])
+    ids.resolve_team("NOTT'M FOREST", source="football_data")
+
+    # A later run resolves via a differently-cased spelling that still
+    # matches -- the first-recorded variant should stick, not flip-flop.
+    ids.resolve_team("nott'm forest", source="football_data")
+
+    teams = ids.load_teams()
+    row = teams[teams["canonical_id"] == "fpl-team-1"].iloc[0]
+    assert row["football_data_name"] == "NOTT'M FOREST"
+
+
+def test_resolve_team_unknown_source_has_no_naming_variant_column_to_update(tmp_path, monkeypatch):
+    """A source with no naming-variant column in the schema (e.g.
+    statsbomb, which only gets an id slot) just doesn't record one --
+    that's a no-op, not an error."""
+    monkeypatch.setattr(ids, "TEAMS_PATH", tmp_path / "teams.csv")
+    monkeypatch.setattr(ids, "UNRESOLVED_PATH", tmp_path / "unresolved.csv")
+    ids.register_fpl_teams([{"id": 1, "name": "Arsenal"}])
+
+    result = ids.resolve_team("Arsenal", source="statsbomb")
+    assert result == "fpl-team-1"  # still resolves fine
+
+
 # ---------------------------------------------------------------------------
 # register_fpl_teams / register_fpl_players (seeding, idempotency)
 # ---------------------------------------------------------------------------

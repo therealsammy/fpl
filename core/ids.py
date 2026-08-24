@@ -222,11 +222,41 @@ def resolve_player(name: str, source: str, hints: dict | None = None) -> str | N
     return result["canonical_id"]
 
 
+# Which teams.csv column records a source's own naming for a team, once
+# resolved. Not every source gets a naming-variant column (SPEC's schema
+# only names these two); a source without one here just isn't recorded,
+# which is fine -- the canonical_id match is what matters.
+TEAM_NAME_VARIANT_COLUMNS = {"football_data": "football_data_name", "understat": "understat_name"}
+
+
 def resolve_team(name: str, source: str, hints: dict | None = None) -> str | None:
+    """
+    canonical_id if `name` (as seen from `source`) matches an existing
+    team, else None (logged to unresolved.csv). On a successful match,
+    also records `name` into that source's naming-variant column in
+    teams.csv (e.g. football_data_name) if it isn't set yet -- this is
+    what makes the crosswalk actually accumulate cross-source naming
+    over time, rather than just being a one-off lookup.
+    """
     result = match(name, load_teams(), hints)
     if result["canonical_id"] is None:
         _log_unresolved("team", source, name, hints, result)
+    else:
+        _record_team_naming_variant(result["canonical_id"], source, name)
     return result["canonical_id"]
+
+
+def _record_team_naming_variant(canonical_id: str, source: str, name: str) -> None:
+    column = TEAM_NAME_VARIANT_COLUMNS.get(source)
+    if column is None:
+        return
+    teams = load_teams().set_index("canonical_id")
+    if canonical_id not in teams.index:
+        return
+    current = teams.loc[canonical_id, column]
+    if pd.isna(current):
+        teams.loc[canonical_id, column] = name
+        _save(teams.reset_index(), TEAMS_PATH, TEAM_SCHEMA)
 
 
 # ---------------------------------------------------------------------------
