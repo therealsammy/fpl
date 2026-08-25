@@ -1119,6 +1119,14 @@ def main():
             st.Page(lambda: page_analysis(df, cur, squad), title="Analysis", url_path="analysis"),
             st.Page(lambda: page_live(df, cur, squad), title="Live", url_path="live"),
         ],
+        "Ledger": [
+            st.Page("pages/Ledger_Elo.py", title="Elo ratings", url_path="ledger-elo"),
+            st.Page("pages/Ledger_Title_Races.py", title="Title races", url_path="ledger-title-races"),
+            st.Page("pages/Ledger_Upsets.py", title="Upsets", url_path="ledger-upsets"),
+            st.Page("pages/Ledger_On_This_Day.py", title="On this day", url_path="ledger-on-this-day"),
+            st.Page("pages/Ledger_Market_Efficiency.py", title="Market efficiency",
+                    url_path="ledger-market-efficiency"),
+        ],
     }
     pg = st.navigation(pages, position="top")
     pg.run()
