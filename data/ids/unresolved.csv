@@ -1,6 +1,4 @@
 as_of,entity_type,source,name,hints,best_candidate,best_score
-2026-08-24,team,football_data,Tottenham,,Nott'm Forest,0.476
-2026-08-24,team,football_data,Man United,,Man Utd,0.824
 2026-08-24,team,football_data,Notts County,,Nott'm Forest,0.583
 2026-08-24,team,football_data,Oldham,,Fulham,0.667
 2026-08-24,team,football_data,Bury,,Spurs,0.444
@@ -31,36 +29,9 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-24,team,football_data,Huddersfield,,Sunderland,0.545
 2026-08-24,team,football_data,Plymouth,,Bournemouth,0.526
 2026-08-24,team,football_data,Luton,,Everton,0.5
-2026-08-24,team,football_data,Hull,,Hull City,0.615
 2026-08-24,team,football_data,Sheffield Weds,,Leeds,0.421
-2026-08-24,team,football_data,Ipswich,,Ipswich Town,0.737
 2026-08-24,team,football_data,Leicester,,Leeds,0.571
 2026-08-24,team,football_data,Oxford,,Brentford,0.533
-2026-08-24,team,football_data,Coventry,,Coventry City,0.762
-2026-08-24,team,football_data,Wolves,,Leeds,0.545
-2026-08-24,team,football_data,Bolton,,Brighton,0.571
-2026-08-24,team,football_data,Bristol City,,Brighton,0.5
-2026-08-24,team,football_data,Charlton,,Everton,0.533
-2026-08-24,team,football_data,Middlesbrough,,Brighton,0.381
-2026-08-24,team,football_data,Norwich,,Ipswich Town,0.421
-2026-08-24,team,football_data,Portsmouth,,Bournemouth,0.667
-2026-08-24,team,football_data,Stoke,,Newcastle,0.429
-2026-08-24,team,football_data,Sheffield United,,Sunderland,0.385
-2026-08-24,team,football_data,Watford,,Brentford,0.625
-2026-08-24,team,football_data,Burnley,,Bournemouth,0.556
-2026-08-24,team,football_data,Cardiff,,Arsenal,0.286
-2026-08-24,team,football_data,Blackburn,,Bournemouth,0.4
-2026-08-24,team,football_data,Preston,,Everton,0.571
-2026-08-24,team,football_data,Millwall,,Aston Villa,0.421
-2026-08-24,team,football_data,Derby,,Sunderland,0.4
-2026-08-24,team,football_data,Lincoln,,Liverpool,0.5
-2026-08-24,team,football_data,West Brom,,Bournemouth,0.4
-2026-08-24,team,football_data,QPR,,Spurs,0.5
-2026-08-24,team,football_data,Swansea,,Arsenal,0.571
-2026-08-24,team,football_data,Birmingham,,Brighton,0.444
-2026-08-24,team,football_data,Southampton,,Fulham,0.471
-2026-08-24,team,football_data,West Ham,,Fulham,0.429
-2026-08-24,team,football_data,Wrexham,,Fulham,0.462
 2026-08-24,team,football_data,Lerida,,Leeds,0.545
 2026-08-24,team,football_data,Logrones,,Leeds,0.462
 2026-08-24,team,football_data,Compostela,,Chelsea,0.471
@@ -79,7 +50,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-24,team,football_data,Zaragoza,,Arsenal,0.4
 2026-08-24,team,football_data,Cordoba,,Brentford,0.375
 2026-08-24,team,football_data,Sp Gijon,,Brighton,0.375
-2026-08-24,team,football_data,La Coruna,,Crystal Palace,0.522
 2026-08-24,team,football_data,Huesca,,Chelsea,0.615
 2026-08-24,team,football_data,Eibar,,Arsenal,0.333
 2026-08-24,team,football_data,Almeria,,Liverpool,0.375
@@ -88,31 +58,12 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-24,team,football_data,Leganes,,Leeds,0.667
 2026-08-24,team,football_data,Las Palmas,,Crystal Palace,0.5
 2026-08-24,team,football_data,Valladolid,,Aston Villa,0.381
-2026-08-24,team,football_data,Celta,,Chelsea,0.667
 2026-08-24,team,football_data,Girona,,Arsenal,0.462
 2026-08-24,team,football_data,Mallorca,,Aston Villa,0.421
-2026-08-24,team,football_data,Real Madrid,,Arsenal,0.556
-2026-08-24,team,football_data,Valencia,,Everton,0.4
-2026-08-24,team,football_data,Betis,,Brentford,0.429
-2026-08-24,team,football_data,Sociedad,,Aston Villa,0.421
-2026-08-24,team,football_data,Osasuna,,Sunderland,0.471
 2026-08-24,team,football_data,Oviedo,,Leeds,0.364
-2026-08-24,team,football_data,Ath Bilbao,,Aston Villa,0.571
-2026-08-24,team,football_data,Barcelona,,Arsenal,0.625
-2026-08-24,team,football_data,Ath Madrid,,Man City,0.444
-2026-08-24,team,football_data,Sevilla,,Aston Villa,0.667
-2026-08-24,team,football_data,Santander,,Sunderland,0.526
-2026-08-24,team,football_data,Espanol,,Liverpool,0.5
 2026-08-24,team,football_data,Dep. A Coruna,,Arsenal,0.421
 2026-08-24,team,football_data,Atl. Madrid,,Man City,0.444
 2026-08-24,team,football_data,Rayo Vallecano,,Aston Villa,0.56
-2026-08-24,team,football_data,Getafe,,Brentford,0.4
-2026-08-24,team,football_data,Vallecano,,Aston Villa,0.4
-2026-08-24,team,football_data,Villarreal,,Arsenal,0.588
-2026-08-24,team,football_data,Levante,,Leeds,0.5
-2026-08-24,team,football_data,Elche,,Chelsea,0.5
-2026-08-24,team,football_data,Malaga,,Aston Villa,0.353
-2026-08-24,team,football_data,Alaves,,Leeds,0.545
 2026-08-24,team,football_data,Leipzig,,Liverpool,0.375
 2026-08-24,team,football_data,Wattenscheid,,Newcastle,0.381
 2026-08-24,team,football_data,M'Gladbach,,Man Utd,0.375
@@ -187,31 +138,11 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-24,team,football_data,Benevento,,Everton,0.625
 2026-08-24,team,football_data,Sampdoria,,Spurs,0.429
 2026-08-24,team,football_data,Spezia,,Arsenal,0.462
-2026-08-24,team,football_data,Frosinone,,Nott'm Forest,0.476
 2026-08-24,team,football_data,Salernitana,,Sunderland,0.476
-2026-08-24,team,football_data,Venezia,,Arsenal,0.429
 2026-08-24,team,football_data,Empoli,,Liverpool,0.533
-2026-08-24,team,football_data,Monza,,Aston Villa,0.375
-2026-08-24,team,football_data,Parma,,Arsenal,0.5
-2026-08-24,team,football_data,Milan,,Man Utd,0.5
-2026-08-24,team,football_data,Fiorentina,,Nott'm Forest,0.545
-2026-08-24,team,football_data,Napoli,,Arsenal,0.462
-2026-08-24,team,football_data,Lazio,,Liverpool,0.429
 2026-08-24,team,football_data,Verona,,Everton,0.769
-2026-08-24,team,football_data,Bologna,,Brighton,0.4
-2026-08-24,team,football_data,Torino,,Everton,0.462
-2026-08-24,team,football_data,Lecce,,Leeds,0.6
 2026-08-24,team,football_data,Cremonese,,Chelsea,0.5
-2026-08-24,team,football_data,Atalanta,,Crystal Palace,0.455
-2026-08-24,team,football_data,Inter,,Coventry City,0.444
 2026-08-24,team,football_data,Pisa,,Spurs,0.444
-2026-08-24,team,football_data,Sassuolo,,Aston Villa,0.421
-2026-08-24,team,football_data,Udinese,,Newcastle,0.5
-2026-08-24,team,football_data,Como,,Bournemouth,0.4
-2026-08-24,team,football_data,Genoa,,Arsenal,0.5
-2026-08-24,team,football_data,Cagliari,,Crystal Palace,0.364
-2026-08-24,team,football_data,Juventus,,Everton,0.4
-2026-08-24,team,football_data,Roma,,Nott'm Forest,0.375
 2026-08-24,team,football_data,Martigues,,Arsenal,0.375
 2026-08-24,team,football_data,Gueugnon,,Everton,0.4
 2026-08-24,team,football_data,Chateauroux,,Chelsea,0.444
@@ -219,7 +150,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-24,team,football_data,Istres,,Spurs,0.545
 2026-08-24,team,football_data,Sedan,,Sunderland,0.533
 2026-08-24,team,football_data,Boulogne,,Bournemouth,0.526
-2026-08-24,team,football_data,Le Mans,,Man City,0.533
 2026-08-24,team,football_data,Grenoble,,Arsenal,0.533
 2026-08-24,team,football_data,Arles,,Leeds,0.6
 2026-08-24,team,football_data,Sochaux,,Chelsea,0.429
@@ -234,27 +164,97 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-24,team,football_data,Nimes,,Newcastle,0.429
 2026-08-24,team,football_data,Dijon,,Brighton,0.462
 2026-08-24,team,football_data,Bordeaux,,Bournemouth,0.526
-2026-08-24,team,football_data,Troyes,,Leeds,0.364
 2026-08-24,team,football_data,Ajaccio,,Coventry City,0.3
 2026-08-24,team,football_data,Clermont,,Everton,0.533
 2026-08-24,team,football_data,St Etienne,,Newcastle,0.421
 2026-08-24,team,football_data,Reims,,Leeds,0.4
 2026-08-24,team,football_data,Montpellier,,Liverpool,0.4
 2026-08-24,team,football_data,Nantes,,Newcastle,0.533
-2026-08-24,team,football_data,Nice,,Newcastle,0.462
-2026-08-24,team,football_data,Marseille,,Arsenal,0.625
-2026-08-24,team,football_data,Lorient,,Nott'm Forest,0.526
-2026-08-24,team,football_data,Lille,,Hull City,0.429
-2026-08-24,team,football_data,Brest,,Brentford,0.571
-2026-08-24,team,football_data,Paris FC,,Spurs,0.462
-2026-08-24,team,football_data,Lyon,,Everton,0.364
-2026-08-24,team,football_data,Strasbourg,,Spurs,0.4
-2026-08-24,team,football_data,Angers,,Arsenal,0.462
-2026-08-24,team,football_data,Auxerre,,Sunderland,0.353
-2026-08-24,team,football_data,Le Havre,,Arsenal,0.533
-2026-08-24,team,football_data,Lens,,Leeds,0.667
-2026-08-24,team,football_data,Rennes,,Leeds,0.545
-2026-08-24,team,football_data,Toulouse,,Bournemouth,0.421
 2026-08-24,team,football_data,Metz,,Everton,0.364
-2026-08-24,team,football_data,Paris SG,,Spurs,0.462
-2026-08-24,team,football_data,Monaco,,Aston Villa,0.353
+2026-08-26,team,football_data,Hull,,Hull City,0.615
+2026-08-26,team,football_data,Ipswich,,Ipswich Town,0.737
+2026-08-26,team,football_data,Coventry,,Coventry City,0.762
+2026-08-26,team,football_data,Man United,,Man Utd,0.824
+2026-08-26,team,football_data,Tottenham,,Nott'm Forest,0.476
+2026-08-26,team,football_data,Blackburn,,Bournemouth,0.4
+2026-08-26,team,football_data,Preston,,Everton,0.571
+2026-08-26,team,football_data,Millwall,,Aston Villa,0.421
+2026-08-26,team,football_data,Derby,,Sunderland,0.4
+2026-08-26,team,football_data,Lincoln,,Liverpool,0.5
+2026-08-26,team,football_data,West Brom,,Bournemouth,0.4
+2026-08-26,team,football_data,QPR,,Spurs,0.5
+2026-08-26,team,football_data,Swansea,,Arsenal,0.571
+2026-08-26,team,football_data,Birmingham,,Brighton,0.444
+2026-08-26,team,football_data,Southampton,,Fulham,0.471
+2026-08-26,team,football_data,West Ham,,Fulham,0.429
+2026-08-26,team,football_data,Wrexham,,Fulham,0.462
+2026-08-26,team,football_data,Bristol City,,Brighton,0.5
+2026-08-26,team,football_data,Portsmouth,,Bournemouth,0.667
+2026-08-26,team,football_data,Norwich,,Ipswich Town,0.421
+2026-08-26,team,football_data,Middlesbrough,,Brighton,0.381
+2026-08-26,team,football_data,Cardiff,,Arsenal,0.286
+2026-08-26,team,football_data,Wolves,,Leeds,0.545
+2026-08-26,team,football_data,Bolton,,Brighton,0.571
+2026-08-26,team,football_data,Stoke,,Newcastle,0.429
+2026-08-26,team,football_data,Sheffield United,,Sunderland,0.385
+2026-08-26,team,football_data,Charlton,,Everton,0.533
+2026-08-26,team,football_data,Watford,,Brentford,0.625
+2026-08-26,team,football_data,Burnley,,Bournemouth,0.556
+2026-08-26,team,football_data,Betis,,Brentford,0.429
+2026-08-26,team,football_data,Ath Bilbao,,Aston Villa,0.571
+2026-08-26,team,football_data,Valencia,,Everton,0.4
+2026-08-26,team,football_data,Espanol,,Liverpool,0.5
+2026-08-26,team,football_data,Ath Madrid,,Man City,0.444
+2026-08-26,team,football_data,Osasuna,,Sunderland,0.471
+2026-08-26,team,football_data,Getafe,,Brentford,0.4
+2026-08-26,team,football_data,Vallecano,,Aston Villa,0.4
+2026-08-26,team,football_data,Elche,,Chelsea,0.5
+2026-08-26,team,football_data,Malaga,,Aston Villa,0.353
+2026-08-26,team,football_data,Alaves,,Leeds,0.545
+2026-08-26,team,football_data,Sociedad,,Aston Villa,0.421
+2026-08-26,team,football_data,Sevilla,,Aston Villa,0.667
+2026-08-26,team,football_data,Celta,,Chelsea,0.667
+2026-08-26,team,football_data,Real Madrid,,Arsenal,0.556
+2026-08-26,team,football_data,Villarreal,,Arsenal,0.588
+2026-08-26,team,football_data,Santander,,Sunderland,0.526
+2026-08-26,team,football_data,Barcelona,,Arsenal,0.625
+2026-08-26,team,football_data,Levante,,Leeds,0.5
+2026-08-26,team,football_data,La Coruna,,Crystal Palace,0.522
+2026-08-26,team,football_data,Inter,,Coventry City,0.444
+2026-08-26,team,football_data,Udinese,,Newcastle,0.5
+2026-08-26,team,football_data,Genoa,,Arsenal,0.5
+2026-08-26,team,football_data,Parma,,Arsenal,0.5
+2026-08-26,team,football_data,Frosinone,,Nott'm Forest,0.476
+2026-08-26,team,football_data,Venezia,,Arsenal,0.429
+2026-08-26,team,football_data,Atalanta,,Crystal Palace,0.455
+2026-08-26,team,football_data,Torino,,Everton,0.462
+2026-08-26,team,football_data,Bologna,,Brighton,0.4
+2026-08-26,team,football_data,Roma,,Nott'm Forest,0.375
+2026-08-26,team,football_data,Monza,,Aston Villa,0.375
+2026-08-26,team,football_data,Como,,Bournemouth,0.4
+2026-08-26,team,football_data,Napoli,,Arsenal,0.462
+2026-08-26,team,football_data,Cagliari,,Crystal Palace,0.364
+2026-08-26,team,football_data,Juventus,,Everton,0.4
+2026-08-26,team,football_data,Lecce,,Leeds,0.6
+2026-08-26,team,football_data,Sassuolo,,Aston Villa,0.421
+2026-08-26,team,football_data,Milan,,Man Utd,0.5
+2026-08-26,team,football_data,Lazio,,Liverpool,0.429
+2026-08-26,team,football_data,Fiorentina,,Nott'm Forest,0.545
+2026-08-26,team,football_data,Marseille,,Arsenal,0.625
+2026-08-26,team,football_data,Lens,,Leeds,0.667
+2026-08-26,team,football_data,Le Mans,,Man City,0.533
+2026-08-26,team,football_data,Nice,,Newcastle,0.462
+2026-08-26,team,football_data,Toulouse,,Bournemouth,0.421
+2026-08-26,team,football_data,Troyes,,Leeds,0.364
+2026-08-26,team,football_data,Angers,,Arsenal,0.462
+2026-08-26,team,football_data,Le Havre,,Arsenal,0.533
+2026-08-26,team,football_data,Rennes,,Leeds,0.545
+2026-08-26,team,football_data,Strasbourg,,Spurs,0.4
+2026-08-26,team,football_data,Auxerre,,Sunderland,0.353
+2026-08-26,team,football_data,Brest,,Brentford,0.571
+2026-08-26,team,football_data,Lorient,,Nott'm Forest,0.526
+2026-08-26,team,football_data,Lyon,,Everton,0.364
+2026-08-26,team,football_data,Paris FC,,Spurs,0.462
+2026-08-26,team,football_data,Lille,,Hull City,0.429
+2026-08-26,team,football_data,Monaco,,Aston Villa,0.353
+2026-08-26,team,football_data,Paris SG,,Spurs,0.462
