@@ -30,6 +30,8 @@ import requests
 import streamlit as st
 
 from collectors import fpl_rivals as fr
+from core import export
+from core import theme
 from models import projections as fpr
 
 # ---------------------------------------------------------------------------
@@ -55,18 +57,17 @@ NUMERIC = [
 ]
 POS_ORDER = ["GKP", "DEF", "MID", "FWD"]
 
-# Validated data-viz reference palette (see the dataviz skill). Categorical
-# hues are used in this fixed order, never cycled or reassigned by filter.
-CATEGORICAL_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
-                      "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
-SEQUENTIAL_BLUE = ["#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#104281"]
-DIVERGING_BLUE_RED = ["#104281", "#86b6ef", "#f0efec", "#f0a68a", "#d03b3b"]
+# Validated data-viz reference palette (see the dataviz skill), now shared
+# with the matplotlib PNG exports (core/theme.py, Phase 5) so a downloaded
+# chart matches the interactive one it came from. Categorical hues are used
+# in this fixed order, never cycled or reassigned by filter.
+CATEGORICAL_COLORS = theme.CATEGORICAL_COLORS
+SEQUENTIAL_BLUE = theme.SEQUENTIAL_BLUE
+DIVERGING_BLUE_RED = theme.DIVERGING_BLUE_RED
 
 # Status colors are reserved for state, never reused as a categorical hue.
-STATUS_COLORS = {"good": "#0ca30c", "warning": "#fab219",
-                 "serious": "#ec835a", "critical": "#d03b3b", "neutral": "#898781"}
-STATUS_BADGE = {"good": "green", "warning": "orange",
-                "serious": "orange", "critical": "red", "neutral": "gray"}
+STATUS_COLORS = theme.STATUS_COLORS
+STATUS_BADGE = theme.STATUS_BADGE
 
 st.set_page_config(page_title="FPL Tracker", page_icon="⚽", layout="wide")
 
@@ -238,6 +239,12 @@ def line(data: pd.DataFrame, metric: str, color: str | None = None, height: int 
     if color:
         enc["color"] = alt.Color(f"{color}:N", title=None)
     return alt.Chart(data).mark_line(point=True, strokeWidth=2).encode(**enc).properties(height=height)
+
+
+def png_button(png_bytes: bytes, filename: str, key: str, container=st) -> None:
+    """One line at every chart site: a branded PNG download next to the
+    interactive Altair chart it was built from (Phase 5, BRIEFS.md)."""
+    container.download_button("Download PNG", png_bytes, filename, "image/png", key=key)
 
 
 def scatter(data, x, y, tip, color="Pos", size=None, height=440):
@@ -421,6 +428,10 @@ def page_player(df, cur, squad):
         for pair in [metrics[i:i + 2] for i in range(0, len(metrics), 2)]:
             for col, m in zip(st.columns(len(pair)), pair):
                 col.altair_chart(line(s, m), width="stretch")
+                png = export.line_png(s, "Snapshot", m, title=f"{m} — {p['Player']}",
+                                      source="FPL Tracker", y_label=m)
+                png_button(png, f"{p['Player']}_{m}.png".replace(" ", "_"),
+                          f"png_player_{pid}_{m}", container=col)
 
     with st.expander("All recorded snapshots"):
         st.dataframe(s.drop(columns=["ID"]), width="stretch", hide_index=True)
@@ -459,6 +470,9 @@ def page_compare(df, cur, squad):
     for pair in [metrics[i:i + 2] for i in range(0, len(metrics), 2)]:
         for col, m in zip(st.columns(len(pair)), pair):
             col.altair_chart(line(sub, m, color="Player"), width="stretch")
+            png = export.line_png(sub, "Snapshot", m, group_col="Player",
+                                  title=f"{m} — comparison", source="FPL Tracker", y_label=m)
+            png_button(png, f"compare_{m}.png".replace(" ", "_"), f"png_compare_{m}", container=col)
 
 
 def page_movers(df, cur, squad):
@@ -517,6 +531,9 @@ def page_teams(df, cur, squad):
             color=alt.Color("Total pts:Q", legend=None, scale=alt.Scale(range=SEQUENTIAL_BLUE)),
             tooltip=["Team", "Total pts", "Players", "Top scorer"],
         ).properties(height=520), width="stretch")
+    png = export.bar_png(g["Team"].tolist(), g["Total pts"].tolist(), title="Total points by team",
+                         source="FPL Tracker", x_label="Total points", color=theme.SEQUENTIAL_BLUE[2])
+    png_button(png, "teams_total_points.png", "png_teams")
 
     team = st.selectbox("Squad breakdown", sorted(cur["Team"].unique()))
     sq = cur[cur["Team"] == team].sort_values("Total pts", ascending=False)
@@ -569,6 +586,9 @@ def page_squad(df, cur, squad):
         metric = st.selectbox("Metric", ["Total pts", "Form", "Price", "Owned %", "xGI"])
         st.altair_chart(line(sub, metric, color="Player", height=340),
                         width="stretch")
+        png = export.line_png(sub, "Snapshot", metric, group_col="Player",
+                              title=f"Squad trend — {metric}", source="FPL Tracker", y_label=metric)
+        png_button(png, f"squad_{metric}.png".replace(" ", "_"), f"png_squad_{metric}")
 
 
 def page_rivals(df, cur, squad):
@@ -605,6 +625,7 @@ def page_rivals(df, cur, squad):
     st.caption("Owned % + Captained %, as a share of this league only -- not the global game.")
     eff = enrich(fr.compute_effective_ownership(gw_data)).head(15)
     if not eff.empty:
+        eff_sorted = eff.sort_values("Effective ownership %", ascending=False)
         st.altair_chart(
             alt.Chart(eff).mark_bar(color=CATEGORICAL_COLORS[0], size=14).encode(
                 x=alt.X("Effective ownership %:Q"),
@@ -612,6 +633,10 @@ def page_rivals(df, cur, squad):
                 tooltip=["Player", "Team", "Owned %", "Captained %", "Effective ownership %"],
             ).properties(height=max(120, 24 * len(eff))),
             width="stretch")
+        png = export.bar_png(eff_sorted["Player"].tolist(), eff_sorted["Effective ownership %"].tolist(),
+                             title="Effective ownership (this league)", source="FPL Tracker",
+                             x_label="Effective ownership %", color=theme.CATEGORICAL_COLORS[0])
+        png_button(png, "effective_ownership.png", "png_eff_ownership")
     st.dataframe(eff, width="stretch", hide_index=True)
 
     my_entry_id = fr.ENTRY_ID
@@ -677,6 +702,12 @@ def page_signals(df, cur, squad):
                 tooltip=["Player", "Team", alt.Tooltip("Rise/fall %:Q", format=".1f"), "Note"],
             ).properties(height=max(120, 24 * len(price))),
             width="stretch")
+        bar_colors = [theme.DIVERGING_BLUE_RED[0] if d == "Rise watch" else theme.DIVERGING_BLUE_RED[-1]
+                     for d in price["Direction"]]
+        png = export.bar_png(price["Player"].tolist(), price["Rise/fall %"].tolist(),
+                             title="Price momentum watch", source="FPL Tracker",
+                             x_label="Rise/fall %", color=bar_colors)
+        png_button(png, "price_momentum.png", "png_price_momentum")
 
         view = price[["Player", "Team", "Direction", "Rise/fall %", "Note"]]
         st.dataframe(style_status(view, "Direction", STATUS_MAPS["price_direction"]),
@@ -773,6 +804,11 @@ def page_projections(df, cur, squad):
             tooltip=["Player", "Team", "Pos", "Price", "Expected points", "Confidence"],
         ).properties(height=380).interactive(),
         width="stretch")
+    png = export.scatter_png(view, "Price", "Expected points", color_col="Confidence",
+                             color_map={"High": theme.STATUS_COLORS["good"],
+                                       "Low": theme.STATUS_COLORS["warning"]},
+                             title="Player projections", source="FPL Tracker")
+    png_button(png, "projections.png", "png_projections")
 
     cols = ["Player", "Team", "Pos", "Price", "Start probability", "Expected points",
             "Expected points low", "Expected points high", "Expected points per million",
@@ -820,6 +856,16 @@ def page_models(df, cur, squad):
                 tooltip=["Classification", "Players"],
             ).properties(height=180),
             width="stretch")
+        # Colors keyed off each row's own Classification value, not
+        # status_range positionally -- dropna() above can drop a
+        # category with zero occurrences this run, which would
+        # otherwise desync a flat positional color list from the rows
+        # that actually remain.
+        row_colors = [STATUS_COLORS[STATUS_MAPS["classification"][c]] for c in counts["Classification"]]
+        png = export.bar_png(counts["Classification"].tolist(), counts["Players"].tolist(),
+                             title="Start probability classification", source="FPL Tracker",
+                             x_label="Players", color=row_colors)
+        png_button(png, "start_classification.png", "png_classification")
 
         classes = sorted(latest["Classification"].unique())
         default = [c for c in ["Nailed", "Rotation risk"] if c in classes]
@@ -865,6 +911,7 @@ def page_analysis(df, cur, squad):
 
     tabs = st.tabs(["Regression candidates", "Value", "Differentials",
                     "Momentum", "Custom score"])
+    pos_color_map = dict(zip(POS_ORDER, theme.CATEGORICAL_COLORS[:4]))
 
     with tabs[0]:
         st.markdown(
@@ -884,6 +931,10 @@ def page_analysis(df, cur, squad):
             ref = alt.Chart(pd.DataFrame({"x": [0, hi]})).mark_line(
                 strokeDash=[5, 5], color="gray").encode(x="x:Q", y="x:Q")
             st.altair_chart(base + ref, width="stretch")
+            png = export.scatter_png(d, "xGI", "G+A", color_col="Pos", color_map=pos_color_map,
+                                     size_col="Total pts", diagonal=True,
+                                     title="Goals + assists against xGI", source="FPL Tracker")
+            png_button(png, "regression_candidates.png", "png_regression")
 
             a, b = st.columns(2)
             a.caption("Underperforming — potential buys")
@@ -902,6 +953,10 @@ def page_analysis(df, cur, squad):
                                 ["Player", "Team", "Pos", "Price", "Total pts",
                                  "Pts per £m", "Owned %"], size="Owned %"),
                         width="stretch")
+        png = export.scatter_png(view, "Price", "Total pts", color_col="Pos",
+                                 color_map=pos_color_map, size_col="Owned %",
+                                 title="Points against price", source="FPL Tracker")
+        png_button(png, "value.png", "png_value")
         st.dataframe(view.nlargest(20, "Pts per £m")[
             ["Player", "Team", "Pos", "Price", "Total pts", "Pts per £m",
              "Owned %", "Minutes", "Status"]],
@@ -914,6 +969,10 @@ def page_analysis(df, cur, squad):
         st.altair_chart(scatter(view, "Owned %", "Total pts",
                                 ["Player", "Team", "Pos", "Owned %", "Total pts",
                                  "Price", "Form"]), width="stretch")
+        png = export.scatter_png(view, "Owned %", "Total pts", color_col="Pos",
+                                 color_map=pos_color_map, title="Ownership against points",
+                                 source="FPL Tracker")
+        png_button(png, "differentials.png", "png_differentials")
         d = view[view["Owned %"] <= cap].nlargest(20, "Total pts")
         st.dataframe(d[["Player", "Team", "Pos", "Price", "Owned %", "Total pts",
                         "Form", "xGI", "Minutes", "Status"]],

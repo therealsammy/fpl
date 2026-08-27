@@ -10,14 +10,14 @@ ratings aren't shown here.
 import altair as alt
 import streamlit as st
 
-from core import ledger_data as ld
+from core import export, ledger_data as ld, theme
 
 st.title("Elo ratings")
 st.caption("Standard Elo from results alone. Each league is its own independent rating pool.")
 
-CATEGORICAL_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
-                      "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
-SEQUENTIAL_BLUE = ["#cde2fb", "#86b6ef", "#3987e5", "#1c5cab", "#104281"]
+CATEGORICAL_COLORS = theme.CATEGORICAL_COLORS
+SEQUENTIAL_BLUE = theme.SEQUENTIAL_BLUE
+SOURCE = "football-data.co.uk"
 
 matches = ld.load_matches()
 if matches.empty:
@@ -48,6 +48,11 @@ with tab_current:
             tooltip=["team", alt.Tooltip("rating:Q", format=".1f"), "date"],
         ).properties(height=max(160, 24 * len(top))),
         width="stretch")
+    png = export.bar_png(top["team"].tolist(), top["rating"].tolist(),
+                         title=f"Elo ratings -- {ld.league_label(league)}",
+                         subtitle=f"As of {league_ratings['date'].max()}",
+                         source=SOURCE, x_label="Elo rating", color=theme.SEQUENTIAL_BLUE[2])
+    st.download_button("Download PNG", png, f"elo_{league}.png", "image/png", key="png_elo_current")
     st.dataframe(league_ratings.rename(columns={"team": "Team", "rating": "Rating", "date": "As of"}),
                  width="stretch", hide_index=True,
                  column_config={"Rating": st.column_config.NumberColumn(format="%.1f")})
@@ -69,3 +74,8 @@ with tab_trajectory:
                 tooltip=["team", "date", alt.Tooltip("rating_after:Q", format=".1f"), "opponent", "result"],
             ).properties(height=420).interactive(),
             width="stretch")
+        png = export.line_png(traj, "date", "rating_after", group_col="team",
+                              title=f"Elo rating trajectory -- {ld.league_label(league)}",
+                              source=SOURCE, y_label="Elo rating")
+        st.download_button("Download PNG", png, f"elo_trajectory_{league}.png", "image/png",
+                           key="png_elo_trajectory")

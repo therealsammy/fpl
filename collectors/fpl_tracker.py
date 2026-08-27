@@ -20,6 +20,7 @@ No API key needed. All endpoints are public.
 Config: set ENTRY_ID below, or export FPL_ENTRY_ID in the environment.
 """
 
+import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -48,6 +49,7 @@ def _entry_id() -> int:
 ENTRY_ID = _entry_id()
 OUTPUT = Path("fpl_tracker.xlsx")
 HISTORY = Path("fpl_history.csv")   # the append-only store. Back this up.
+SQUAD_PATH = Path("squad.json")     # current-state file, not an archive -- always overwritten
 FIXTURE_HORIZON = 6                 # gameweeks ahead for fixture difficulty
 TREND_LOOKBACK = 4                  # snapshots back for the medium-term delta
 HISTORY_SHEET_LIMIT = 60_000        # cap rows written into the workbook sheet
@@ -373,6 +375,21 @@ def build_squad(picks, players_df, fixtures_df):
     return pd.DataFrame(rows).sort_values("Slot").reset_index(drop=True)
 
 
+def sync_squad_json(squad_ids: list) -> None:
+    """Keeps squad.json in lockstep with your actual FPL picks, so app.py's
+    squad views are always right without manually re-selecting 15 players
+    in the UI after every transfer window. Unlike fpl_history.csv this is
+    current STATE, not an archive -- overwriting it every run is correct,
+    not a violation of the append-only rule.
+
+    Skips the write when the picks endpoint returned nothing (pre-deadline,
+    or a transient API hiccup) -- an empty read should never blank out a
+    real squad that was already saved from a previous run."""
+    if not squad_ids:
+        return
+    SQUAD_PATH.write_text(json.dumps(sorted(squad_ids)))
+
+
 def build_season_log(history, boot):
     """Your own gameweek-by-gameweek log (retrievable from the API anytime)."""
     if not history or not history.get("current"):
@@ -553,6 +570,7 @@ def main():
     fixtures = build_fixtures(boot, data["fixtures"], FIXTURE_HORIZON)
     squad = build_squad(data["picks"], players, fixtures)
     squad_ids = [p["element"] for p in data["picks"]["picks"]] if data["picks"] else []
+    sync_squad_json(squad_ids)
 
     trends = build_trends(series, squad_ids, TREND_LOOKBACK)
     movers = build_movers(series, TREND_LOOKBACK)

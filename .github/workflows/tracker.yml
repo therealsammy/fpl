@@ -89,7 +89,7 @@ jobs:
           # Some of these only exist if their step actually ran and wrote
           # output (continue-on-error above means a failed step just skips
           # its file here rather than failing this add).
-          for f in fpl_history.csv fpl_tracker.xlsx \
+          for f in fpl_history.csv fpl_tracker.xlsx squad.json \
                    fpl_minutes.csv fpl_rivals.csv signals.csv \
                    defcon_report.csv defcon_dataset.csv validate_report.csv; do
             if [ -f "$f" ]; then
@@ -118,6 +118,7 @@ jobs:
           path: |
             fpl_history.csv
             fpl_tracker.xlsx
+            squad.json
             fpl_minutes.csv
             fpl_rivals.csv
             signals.csv

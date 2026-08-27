@@ -13,12 +13,13 @@ probability to rank them by.
 import altair as alt
 import streamlit as st
 
-from core import ledger_data as ld
+from core import export, ledger_data as ld, theme
 
 st.title("Upsets")
 st.caption("Results ranked by how unlikely the closing odds said the winner was.")
 
-STATUS_COLORS = {"critical": "#d03b3b", "warning": "#fab219", "neutral": "#898781"}
+STATUS_COLORS = theme.STATUS_COLORS
+SOURCE = "football-data.co.uk, Shin-devigged closing odds"
 
 matches = ld.load_matches()
 if matches.empty:
@@ -61,6 +62,13 @@ st.altair_chart(
                 "Winner's implied probability %"],
     ).properties(height=max(160, 24 * min(20, len(biggest)))),
     width="stretch")
+top20 = biggest.head(20)
+match_labels = (top20["home_team"] + " " + top20["score"] + " " + top20["away_team"]
+               + "  (" + top20["date"] + ")")
+png = export.bar_png(match_labels.tolist(), top20["Winner's implied probability %"].tolist(),
+                     title="Biggest upsets", source=SOURCE,
+                     x_label="Winner's implied probability %", color=STATUS_COLORS["critical"])
+st.download_button("Download PNG", png, "upsets.png", "image/png", key="png_upsets")
 
 table = biggest[["date", "League", "home_team", "away_team", "score", "winner",
                  "Winner's implied probability %"]].rename(columns={

@@ -13,12 +13,13 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from core import ledger_data as ld
+from core import export, ledger_data as ld, theme
 
 st.title("Market efficiency")
 st.caption("Calibration of closing-line implied probabilities against actual outcome frequency.")
 
-DIVERGING_BLUE_RED = ["#104281", "#86b6ef", "#f0efec", "#f0a68a", "#d03b3b"]
+DIVERGING_BLUE_RED = theme.DIVERGING_BLUE_RED
+SOURCE = "football-data.co.uk, Shin-devigged closing odds"
 
 matches = ld.load_matches()
 if matches.empty:
@@ -76,6 +77,11 @@ points = alt.Chart(calib).mark_circle(size=90, color=DIVERGING_BLUE_RED[0]).enco
 )
 line_ref = alt.Chart(diagonal).mark_line(strokeDash=[5, 5], color="gray").encode(x="x:Q", y="y:Q")
 st.altair_chart((points + line_ref).properties(height=440).interactive(), width="stretch")
+png = export.scatter_png(calib, "predicted", "actual", size_col="n", diagonal=True,
+                         title="Market calibration", subtitle=f"Brier score {brier:.4f}",
+                         source=SOURCE, x_label="Implied probability (closing line)",
+                         y_label="Actual frequency")
+st.download_button("Download PNG", png, "market_efficiency.png", "image/png", key="png_calibration")
 
 st.caption("Dashed line is perfect calibration. Points above it mean the market underpriced that "
           "outcome band (it happened more than the odds implied); below means it overpriced it.")

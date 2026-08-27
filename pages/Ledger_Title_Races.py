@@ -16,13 +16,13 @@ See core/ledger_data.py's complete_seasons() for the exact rule.
 import altair as alt
 import streamlit as st
 
-from core import ledger_data as ld
+from core import export, ledger_data as ld, theme
 
 st.title("Title races")
 st.caption("Monte Carlo simulation from Elo ratings, run at every matchday of a completed season.")
 
-CATEGORICAL_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100",
-                      "#e87ba4", "#008300", "#4a3aa7", "#e34948"]
+CATEGORICAL_COLORS = theme.CATEGORICAL_COLORS
+SOURCE = "football-data.co.uk"
 
 matches = ld.load_matches()
 if matches.empty:
@@ -70,6 +70,13 @@ st.altair_chart(
         tooltip=["team", "date", alt.Tooltip("win_probability:Q", format=".1%")],
     ).properties(height=440).interactive(),
     width="stretch")
+chart_data_pct = chart_data.copy()
+chart_data_pct["Title probability %"] = chart_data_pct["win_probability"] * 100
+png = export.line_png(chart_data_pct, "date", "Title probability %", group_col="team",
+                      title=f"Title race -- {ld.season_label(season)} {ld.league_label(league)}",
+                      source=SOURCE, y_label="Title probability %")
+st.download_button("Download PNG", png, f"title_race_{league}_{season}.png", "image/png",
+                   key="png_title_race")
 
 with st.expander("Final probabilities, every team"):
     table = final_checkpoint[["team", "win_probability"]].sort_values(

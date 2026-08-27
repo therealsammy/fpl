@@ -8,4 +8,7 @@ numpy
 pyarrow
 openpyxl
 streamlit
+altair
+matplotlib
+pillow
 pytest
