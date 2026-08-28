@@ -66,6 +66,36 @@ def test_match_normalized_on_accent_difference():
     assert result["confidence"] == pytest.approx(0.95)
 
 
+def test_match_known_alias_bridges_a_nickname_fuzzy_scoring_cannot():
+    """Real gap found live (2026-08-28): FPL's own display_name for
+    Man United is 'Man Utd' -- 'Man United' (football_data's spelling)
+    scores 0.824 against it, just under the 0.85 fuzzy threshold, so it
+    was falling through to unresolved for every single historical match
+    until this alias entry existed."""
+    registry = _registry([{"canonical_id": "fpl-team-16", "display_name": "Man Utd"}])
+    result = ids.match("Man United", registry)
+    assert result == {"canonical_id": "fpl-team-16", "confidence": 1.0, "method": "alias"}
+
+
+def test_match_known_alias_bridges_a_true_nickname_with_zero_string_overlap():
+    """'Tottenham' vs FPL's 'Spurs' scores 0.0 on the fuzzy matcher --
+    no similarity metric would ever bridge an actual nickname like this."""
+    registry = _registry([{"canonical_id": "fpl-team-19", "display_name": "Spurs"}])
+    result = ids.match("Tottenham", registry)
+    assert result["canonical_id"] == "fpl-team-19"
+    assert result["method"] == "alias"
+
+
+def test_match_known_alias_still_requires_hint_agreement_when_ambiguous():
+    registry = _registry([
+        {"canonical_id": "a", "display_name": "Man Utd", "team": "men"},
+        {"canonical_id": "b", "display_name": "Man Utd", "team": "women"},
+    ])
+    result = ids.match("Man United", registry, hints={"team": "women"})
+    assert result["canonical_id"] == "b"
+    assert result["method"] == "alias"
+
+
 def test_match_fuzzy_accepted_when_above_threshold_and_no_hints():
     registry = _registry([{"canonical_id": "p1", "display_name": "Mohammed Salah"}])
     result = ids.match("Mohamed Salah", registry)  # spelling variant -- not exact/normalized-equal
@@ -275,6 +305,48 @@ def test_register_fpl_teams_preserves_resolved_columns_across_reruns(tmp_path, m
 
     result = ids.register_fpl_teams([{"id": 1, "name": "Arsenal"}])
     assert result.iloc[0]["football_data_name"] == "Arsenal"
+
+
+# ---------------------------------------------------------------------------
+# register_historical_teams
+# ---------------------------------------------------------------------------
+
+def test_register_historical_teams_seeds_a_club_fpl_no_longer_lists(tmp_path, monkeypatch):
+    monkeypatch.setattr(ids, "TEAMS_PATH", tmp_path / "teams.csv")
+    result = ids.register_historical_teams(["Leicester"])
+
+    row = result[result["display_name"] == "Leicester"].iloc[0]
+    assert row["canonical_id"] == "hist-team-leicester"
+    assert row["football_data_name"] == "Leicester"
+    assert row["method"] == "historical_seed"
+    assert pd.isna(row["fpl_id"])   # FPL has nothing to say about a club it doesn't field
+
+
+def test_register_historical_teams_skips_a_name_that_already_resolves(tmp_path, monkeypatch):
+    """Man United already resolves via KNOWN_ALIASES against FPL's 'Man
+    Utd' entry -- must not mint a second, duplicate canonical id for it."""
+    monkeypatch.setattr(ids, "TEAMS_PATH", tmp_path / "teams.csv")
+    ids.register_fpl_teams([{"id": 16, "name": "Man Utd"}])
+
+    result = ids.register_historical_teams(["Man United"])
+    assert len(result) == 1
+    assert result.iloc[0]["canonical_id"] == "fpl-team-16"
+
+
+def test_register_historical_teams_is_idempotent_on_rerun(tmp_path, monkeypatch):
+    monkeypatch.setattr(ids, "TEAMS_PATH", tmp_path / "teams.csv")
+    ids.register_historical_teams(["Leicester"])
+    result = ids.register_historical_teams(["Leicester"])
+    assert len(result) == 1
+
+
+def test_register_historical_teams_allows_understat_to_resolve_afterward(tmp_path, monkeypatch):
+    monkeypatch.setattr(ids, "TEAMS_PATH", tmp_path / "teams.csv")
+    monkeypatch.setattr(ids, "UNRESOLVED_PATH", tmp_path / "unresolved.csv")
+    ids.register_historical_teams(["Leicester"])
+
+    canonical_id = ids.resolve_team("Leicester", source="understat")
+    assert canonical_id == "hist-team-leicester"
 
 
 def test_register_fpl_players_seeds_expected_columns(tmp_path, monkeypatch):

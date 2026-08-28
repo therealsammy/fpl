@@ -66,6 +66,22 @@ TEAM_DTYPES = {"canonical_id": "string", "display_name": "string", "fpl_id": "In
 # it goes to unresolved.csv for a human to decide, per the hard rule.
 FUZZY_THRESHOLD = 0.85
 
+# A small, manually curated table for the specific case similarity
+# scoring can never solve: FPL's own display_name is sometimes a
+# nickname or abbreviation with little to no string overlap with how
+# other sources spell the same club. This is NOT a relaxation of the
+# fuzzy threshold -- it's an exact, human-verified lookup with zero
+# ambiguity, checked before fuzzy scoring even runs. Verified against
+# the real registry (2026-08-28): "Man United" vs FPL's "Man Utd"
+# scores 0.824, just under the 0.85 bar; "Tottenham" vs FPL's "Spurs"
+# scores 0.0 -- no similarity metric bridges an actual nickname. Kept
+# intentionally small (only entries verified against a real unresolved
+# match), not a speculative full nickname database.
+KNOWN_ALIASES = {
+    "man utd": ["man united", "manchester united"],
+    "spurs": ["tottenham", "tottenham hotspur"],
+}
+
 
 # ---------------------------------------------------------------------------
 # STRING MATCHING (pure)
@@ -142,6 +158,18 @@ def match(name: str, registry: pd.DataFrame, hints: dict | None = None,
         norm_matches = _apply_hints(norm_matches, hints)
     if len(norm_matches) == 1:
         return {"canonical_id": norm_matches.iloc[0]["canonical_id"], "confidence": 0.95, "method": "normalized"}
+
+    # 2.5. Known alias -- an exact, curated lookup for a nickname/
+    # abbreviation no similarity score can bridge (see KNOWN_ALIASES).
+    # Still never ambiguous: falls through to fuzzy/unresolved if more
+    # than one registry row would match the aliased name.
+    alias_key = next((k for k, aliases in KNOWN_ALIASES.items() if target_norm in aliases), None)
+    if alias_key:
+        alias_matches = registry[registry["display_name"].apply(normalize) == alias_key]
+        if len(alias_matches) > 1:
+            alias_matches = _apply_hints(alias_matches, hints)
+        if len(alias_matches) == 1:
+            return {"canonical_id": alias_matches.iloc[0]["canonical_id"], "confidence": 1.0, "method": "alias"}
 
     # 3. Constrained fuzzy -- hint agreement is required whenever hints are
     # given, even for a single strong candidate. Name similarity alone,
@@ -288,6 +316,53 @@ def register_fpl_teams(fpl_teams: list) -> pd.DataFrame:
         for col in ("understat_id", "statsbomb_id", "football_data_name", "understat_name", "verified_at"):
             if col not in existing.columns or pd.isna(existing.loc[cid].get(col)):
                 existing.loc[cid, col] = row.get(col) if col in row else None
+
+    result = existing.reset_index()
+    _save(result, TEAMS_PATH, TEAM_SCHEMA)
+    return result
+
+
+def register_historical_teams(names: list, country: str = "England", tier: int = 1) -> pd.DataFrame:
+    """
+    Seeds teams.csv with clubs FPL's bootstrap-static no longer lists --
+    relegated at some point -- but that appear in the historical
+    archive. FPL only ever tracks the CURRENT season's 20 clubs
+    (register_fpl_teams reflects whatever occupies each of FPL's 20
+    slots today), so a club like a past relegated side has no FPL
+    entry to match against at all, however it's spelled -- not a fuzzy-
+    matching problem, an entirely absent one. Verified live (2026-08-28):
+    this was silently capping Understat xG coverage for the Premier
+    League at 17 of 20 clubs even in-season, since 3 of the "current"
+    slots were occupied by clubs that had only just been promoted.
+
+    football-data.co.uk's own spelling is treated as canonical for
+    these -- it's been stable for three decades, and there's no other
+    authority to prefer. canonical_id is prefixed "hist-team-" (vs
+    FPL's "fpl-team-") so it's always auditable which authority
+    registered which entry.
+
+    Skips any name that already resolves against the existing registry
+    under some other spelling (including via KNOWN_ALIASES) -- this
+    only fills a genuine absence, never creates a duplicate for a team
+    that already has an entry.
+    """
+    existing = load_teams().set_index("canonical_id")
+    now = datetime.now(timezone.utc).isoformat()
+
+    for name in names:
+        result = match(name, existing.reset_index())
+        if result["canonical_id"] is not None:
+            continue
+        cid = f"hist-team-{normalize(name).replace(' ', '-')}"
+        if cid in existing.index:
+            continue
+        existing.loc[cid, "display_name"] = name
+        existing.loc[cid, "football_data_name"] = name
+        existing.loc[cid, "country"] = country
+        existing.loc[cid, "tier"] = tier
+        existing.loc[cid, "confidence"] = 1.0
+        existing.loc[cid, "method"] = "historical_seed"
+        existing.loc[cid, "verified_at"] = now
 
     result = existing.reset_index()
     _save(result, TEAMS_PATH, TEAM_SCHEMA)

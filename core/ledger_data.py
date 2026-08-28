@@ -12,7 +12,8 @@ import streamlit as st
 import pandas as pd
 
 from collectors.football_data import LEAGUES
-from models import elo, title_race
+from models import elo, match, title_race
+from validation import scoreboard
 
 CACHE_TTL = 3600
 
@@ -49,6 +50,20 @@ def simulate_path(league: str, season: str, n_sims: int, seed: int,
     league_history = league_history[league_history["league"] == league]
     return title_race.title_race_path(season_matches, league_history,
                                        n_sims=n_sims, home_advantage=home_advantage, seed=seed)
+
+
+@st.cache_data(ttl=CACHE_TTL, show_spinner=False)
+def load_matches_with_xg() -> pd.DataFrame:
+    return match.load_matches_with_xg()
+
+
+@st.cache_data(ttl=CACHE_TTL, show_spinner="Backtesting the match model…")
+def load_backtest(league: str, min_train_seasons: int = scoreboard.DEFAULT_MIN_TRAIN_SEASONS) -> pd.DataFrame:
+    """Walk-forward backtest for one league, cached -- refitting Dixon-
+    Coles for every season is real work (a few seconds per league), not
+    something to redo on every widget interaction on the Scoreboard page."""
+    matches = load_matches_with_xg()
+    return scoreboard.run_backtest(matches, leagues=[league], min_train_seasons=min_train_seasons)
 
 
 def league_label(code: str) -> str:
