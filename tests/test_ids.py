@@ -86,6 +86,54 @@ def test_match_known_alias_bridges_a_true_nickname_with_zero_string_overlap():
     assert result["method"] == "alias"
 
 
+def test_match_known_alias_bridges_manchester_city_short_name():
+    """Real gap found live (2026-08-28) via Ledger_GLM's upcoming-fixtures
+    feature: Understat's 'Manchester City' vs FPL's 'Man City' scores
+    0.696 -- a genuinely current Premier League club's data was missing
+    from every backtest and GLM fit run so far, not just an edge case."""
+    registry = _registry([{"canonical_id": "fpl-team-15", "display_name": "Man City"}])
+    result = ids.match("Manchester City", registry)
+    assert result["canonical_id"] == "fpl-team-15"
+    assert result["method"] == "alias"
+
+
+def test_match_known_alias_bridges_newcastle_united_short_name():
+    registry = _registry([{"canonical_id": "fpl-team-17", "display_name": "Newcastle"}])
+    result = ids.match("Newcastle United", registry)
+    assert result["canonical_id"] == "fpl-team-17"
+    assert result["method"] == "alias"
+
+
+def test_match_known_alias_bridges_nottm_forest_abbreviation():
+    registry = _registry([{"canonical_id": "fpl-team-18", "display_name": "Nott'm Forest"}])
+    result = ids.match("Nottingham Forest", registry)
+    assert result["canonical_id"] == "fpl-team-18"
+    assert result["method"] == "alias"
+
+
+def test_match_known_alias_bridges_coventry_short_name_to_fpl_full_name():
+    """Runs the other direction from the man-utd/spurs cases: FPL's
+    registered name is the LONGER one here ('Coventry City'), and
+    football-data's/The Odds API's is the short form ('Coventry').
+    Real gap found live (2026-08-28) building a betting-odds
+    comparison -- Coventry is genuinely in this season's Premier
+    League, and the mismatch (0.762, under threshold) had already
+    caused a spurious duplicate canonical entry for the same real club."""
+    registry = _registry([{"canonical_id": "fpl-team-7", "display_name": "Coventry City"}])
+    result = ids.match("Coventry", registry)
+    assert result["canonical_id"] == "fpl-team-7"
+    assert result["method"] == "alias"
+
+
+def test_match_known_alias_bridges_hull_and_ipswich_short_names():
+    registry = _registry([
+        {"canonical_id": "fpl-team-11", "display_name": "Hull City"},
+        {"canonical_id": "fpl-team-12", "display_name": "Ipswich Town"},
+    ])
+    assert ids.match("Hull", registry)["canonical_id"] == "fpl-team-11"
+    assert ids.match("Ipswich", registry)["canonical_id"] == "fpl-team-12"
+
+
 def test_match_known_alias_still_requires_hint_agreement_when_ambiguous():
     registry = _registry([
         {"canonical_id": "a", "display_name": "Man Utd", "team": "men"},

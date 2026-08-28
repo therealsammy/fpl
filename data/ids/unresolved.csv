@@ -259,21 +259,8 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,Ipswich,,Ipswich Town,0.737
 2026-08-28,team,understat,Coventry,,Coventry City,0.762
 2026-08-28,team,understat,Hull,,Hull City,0.615
-2026-08-28,team,football_data,Portsmouth,,Bournemouth,0.667
-2026-08-28,team,football_data,Birmingham,,Brighton,0.444
 2026-08-28,team,football_data,Blackpool,,Liverpool,0.556
-2026-08-28,team,football_data,Wigan,,Swansea,0.5
 2026-08-28,team,football_data,Reading,,Arsenal,0.429
-2026-08-28,team,football_data,Swindon,,Sunderland,0.471
-2026-08-28,team,football_data,Oldham,,Fulham,0.667
-2026-08-28,team,football_data,Bolton,,Luton,0.727
-2026-08-28,team,football_data,Barnsley,,Burnley,0.8
-2026-08-28,team,football_data,Charlton,,Luton,0.615
-2026-08-28,team,football_data,Blackburn,,Burnley,0.5
-2026-08-28,team,football_data,Derby,,Coventry,0.462
-2026-08-28,team,football_data,Sheffield Weds,,Sheffield United,0.8
-2026-08-28,team,football_data,Bradford,,Brentford,0.706
-2026-08-28,team,football_data,Wimbledon,,Leeds,0.429
 2026-08-28,team,understat,"Manchester City,Swansea",,Man City,0.533
 2026-08-28,team,understat,"Chelsea,Queens Park Rangers",,Chelsea,0.424
 2026-08-28,team,understat,"Burnley,Hull",,Burnley,0.778
@@ -286,7 +273,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"Crystal Palace,Queens Park Rangers",,Crystal Palace,0.596
 2026-08-28,team,understat,"Leicester,Queens Park Rangers",,Leicester,0.486
 2026-08-28,team,understat,"Burnley,Manchester United",,Sheffield United,0.5
-2026-08-28,team,understat,Queens Park Rangers,,Arsenal,0.385
 2026-08-28,team,understat,"Everton,Norwich",,Everton,0.667
 2026-08-28,team,understat,"Bournemouth,Crystal Palace",,Crystal Palace,0.718
 2026-08-28,team,understat,"Bournemouth,Norwich",,Bournemouth,0.759
@@ -336,7 +322,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"Liverpool,Southampton",,Southampton,0.71
 2026-08-28,team,understat,"West Bromwich Albion,West Ham",,West Brom,0.486
 2026-08-28,team,understat,"Arsenal,West Bromwich Albion",,Arsenal,0.412
-2026-08-28,team,understat,West Bromwich Albion,,West Brom,0.621
 2026-08-28,team,understat,"Burnley,Newcastle United",,Newcastle,0.562
 2026-08-28,team,understat,"Leeds,Manchester United",,Sheffield United,0.579
 2026-08-28,team,understat,"Everton,Manchester United",,Sheffield United,0.5
@@ -392,7 +377,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"Chelsea,Sunderland",,Sunderland,0.741
 2026-08-28,team,understat,"Fulham,Manchester City",,Man City,0.552
 2026-08-28,team,understat,"Chelsea,Everton",,Chelsea,0.667
-2026-08-28,team,understat,Wolverhampton Wanderers,,Southampton,0.529
 2026-08-28,team,understat,Manchester City,,Man City,0.696
 2026-08-28,team,understat,Nottingham Forest,,Nott'm Forest,0.828
 2026-08-28,team,understat,Newcastle United,,Newcastle,0.72
@@ -1019,3 +1003,19 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,Lille,,Hull,0.444
 2026-08-28,team,understat,Le Havre,,Arsenal,0.533
 2026-08-28,team,understat,Monaco,,Luton,0.364
+2026-08-28,team,football_data,Birmingham,,Brighton,0.444
+2026-08-28,team,football_data,Wigan,,Swansea,0.5
+2026-08-28,team,football_data,Portsmouth,,Bournemouth,0.667
+2026-08-28,team,football_data,Oldham,,Fulham,0.667
+2026-08-28,team,football_data,Swindon,,Sunderland,0.471
+2026-08-28,team,football_data,Bolton,,Luton,0.727
+2026-08-28,team,football_data,Barnsley,,Burnley,0.8
+2026-08-28,team,football_data,Charlton,,Luton,0.615
+2026-08-28,team,football_data,Blackburn,,Burnley,0.5
+2026-08-28,team,football_data,Derby,,Sunderland,0.4
+2026-08-28,team,football_data,Wimbledon,,Leeds,0.429
+2026-08-28,team,football_data,Bradford,,Brentford,0.706
+2026-08-28,team,football_data,Sheffield Weds,,Sheffield United,0.8
+2026-08-28,team,understat,Queens Park Rangers,,Arsenal,0.385
+2026-08-28,team,understat,West Bromwich Albion,,West Brom,0.621
+2026-08-28,team,understat,Wolverhampton Wanderers,,Southampton,0.529

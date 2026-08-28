@@ -76,10 +76,37 @@ FUZZY_THRESHOLD = 0.85
 # scores 0.824, just under the 0.85 bar; "Tottenham" vs FPL's "Spurs"
 # scores 0.0 -- no similarity metric bridges an actual nickname. Kept
 # intentionally small (only entries verified against a real unresolved
-# match), not a speculative full nickname database.
+# match), not a speculative full nickname database. Three more found
+# live (2026-08-28) via Ledger_GLM's upcoming-fixtures feature: three
+# of the CURRENT season's 20 Premier League clubs were still silently
+# unresolved from Understat -- "Manchester City" vs FPL's "Man City"
+# (0.696), "Newcastle United" vs FPL's "Newcastle" (0.72), "Nottingham
+# Forest" vs FPL's "Nott'm Forest" (0.828) -- meaning every one of
+# those three clubs' xG/npxG/PPDA/deep-completions data had been
+# missing from every backtest and GLM fit run so far, not just future
+# fixtures.
+#
+# The next three run the OTHER direction -- FPL's registered name is
+# the LONGER one this time ("Coventry City", "Hull City", "Ipswich
+# Town"), and football-data.co.uk's/The Odds API's is the short form
+# ("Coventry", "Hull", "Ipswich"). Found live (2026-08-28) while
+# building a betting-odds comparison: all three are genuinely in this
+# season's Premier League (fpl-team-7/11/12), but the short forms
+# scored 0.762/0.615/0.737 -- all under threshold -- so
+# register_historical_teams() had already (wrongly) minted separate
+# "hist-team-*" entries for what are really the SAME three clubs,
+# splitting their data across two canonical ids until the merge that
+# fixed this (see the historical-club-name-collision note wherever
+# this file's git history/commit message covers it).
 KNOWN_ALIASES = {
     "man utd": ["man united", "manchester united"],
     "spurs": ["tottenham", "tottenham hotspur"],
+    "man city": ["manchester city"],
+    "newcastle": ["newcastle united"],
+    "nottm forest": ["nottingham forest"],
+    "coventry city": ["coventry"],
+    "hull city": ["hull"],
+    "ipswich town": ["ipswich"],
 }
 
 

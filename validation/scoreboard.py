@@ -28,6 +28,7 @@ ever contributes to its own prediction.
 import numpy as np
 import pandas as pd
 
+from core import archive
 from models import elo, match, title_race
 
 OUTCOME_COLS = ["away_win", "draw", "home_win"]   # a real order (from the home team's view), for RPS
@@ -177,6 +178,48 @@ def dixon_coles_predictions(train_matches: pd.DataFrame, test_matches: pd.DataFr
     return pd.DataFrame(rows, index=test_matches.index)
 
 
+GLM_COVARIATES = ["npxg_form", "ppda_form", "deep_form"]
+
+
+def dixon_coles_glm_predictions(train_matches: pd.DataFrame, test_matches: pd.DataFrame,
+                                covariates: list = GLM_COVARIATES,
+                                half_life_days: float = match.DEFAULT_HALF_LIFE_DAYS) -> pd.DataFrame:
+    """The GLM extension (models.match.fit_team_strengths_glm), fit on
+    goals with rolling-form covariates layered on top, predicting every
+    fixture in `test_matches`. `train_matches`/`test_matches` must
+    already carry home_{c}_form/away_{c}_form columns -- see
+    models.match.compute_rolling_form(), called once per league in
+    run_backtest() rather than per season (cheap, and there's no
+    leakage risk in computing it over the whole league up front: each
+    row's own form value already only reflects strictly earlier
+    matches by construction).
+
+    rho is still fit on the plain (non-GLM) attack/defense strengths --
+    the low-score correlation correction has nothing to do with the
+    covariate terms, same reasoning as fit_rho() itself."""
+    strengths = match.fit_team_strengths_glm(train_matches, covariates, half_life_days=half_life_days)
+    if not strengths["teams"]:
+        nan_row = {c: np.nan for c in OUTCOME_COLS}
+        return pd.DataFrame([nan_row] * len(test_matches), index=test_matches.index)
+
+    base_strengths = match.fit_team_strengths(train_matches, half_life_days=half_life_days)
+    rho = match.fit_rho(train_matches, base_strengths, half_life_days=half_life_days)
+
+    rows = []
+    for _, m in test_matches.iterrows():
+        home_form = {c: m.get(f"home_{c}") for c in covariates}
+        away_form = {c: m.get(f"away_{c}") for c in covariates}
+        if any(pd.isna(v) for v in list(home_form.values()) + list(away_form.values())):
+            rows.append({c: np.nan for c in OUTCOME_COLS})
+            continue
+        lambda_home, lambda_away = match.team_rates_glm(strengths, m["home_team"], m["away_team"],
+                                                        home_form, away_form)
+        grid = match.score_matrix(lambda_home, lambda_away, rho)
+        probs = match.match_probabilities(grid)
+        rows.append({"home_win": probs["home_win"], "draw": probs["draw"], "away_win": probs["away_win"]})
+    return pd.DataFrame(rows, index=test_matches.index)
+
+
 def _blend_rows(model_probs: pd.DataFrame, market_probs: pd.DataFrame, market_weight: float) -> pd.DataFrame:
     """Row-wise blend_with_market -- a row with no complete market
     quote (no odds collected, or a null model probability) passes
@@ -221,7 +264,8 @@ def run_backtest(matches: pd.DataFrame, leagues=None,
 
     Sources: home_advantage_baseline, elo_baseline, dixon_coles,
     dixon_coles_blended, dixon_coles_xg (only where xG coverage exists),
-    dixon_coles_xg_blended, closing_line.
+    dixon_coles_xg_blended, dixon_coles_npxg(_blended), dixon_coles_glm
+    (only where GLM_COVARIATES coverage exists), closing_line.
     """
     matches = matches.dropna(subset=["result"]).sort_values("date").reset_index(drop=True)
     all_scored = []
@@ -238,6 +282,14 @@ def run_backtest(matches: pd.DataFrame, leagues=None,
         # boundary -- see elo_baseline_predictions' docstring. Sliced by
         # date per test season below instead of recomputed.
         full_elo_history = elo.compute_elo_history(league_matches)
+
+        # Same one-pass-per-league reasoning applies to rolling form:
+        # each row's own form value only ever reflects strictly earlier
+        # matches (compute_rolling_form's shift(1)), so computing it once
+        # over the whole league carries no leakage risk across the
+        # season-boundary slices taken below.
+        glm_stats = [c.replace("_form", "") for c in GLM_COVARIATES]
+        league_matches = match.compute_rolling_form(league_matches, glm_stats)
 
         for i in range(min_train_seasons, len(seasons)):
             test_season = seasons[i]
@@ -270,6 +322,12 @@ def run_backtest(matches: pd.DataFrame, leagues=None,
                 sources["dixon_coles_npxg_blended"] = _blend_rows(
                     sources["dixon_coles_npxg"], sources["closing_line"], market_weight)
 
+            glm_cols = [f"home_{c}" for c in GLM_COVARIATES]
+            if all(c in train.columns for c in glm_cols) and train[glm_cols].notna().all(axis=1).any():
+                sources["dixon_coles_glm"] = dixon_coles_glm_predictions(train, test, GLM_COVARIATES, half_life_days)
+                sources["dixon_coles_glm_blended"] = _blend_rows(
+                    sources["dixon_coles_glm"], sources["closing_line"], market_weight)
+
             for source_name, probs in sources.items():
                 chunk = base_cols.copy()
                 chunk["source"] = source_name
@@ -292,3 +350,45 @@ def summarize(scored: pd.DataFrame) -> pd.DataFrame:
         rows.append({"source": source, "log_loss": log_loss(clean),
                      "rps": ranked_probability_score(clean), "n": len(clean)})
     return pd.DataFrame(rows).sort_values("log_loss")
+
+
+def score_archived_forecasts(matches: pd.DataFrame | None = None) -> pd.DataFrame:
+    """
+    Turns models.live_predictions.py's archive (data/forecasts/) into a
+    "scored" DataFrame in the exact same shape run_backtest() produces
+    (date, league, home_team, away_team, result, source, home_win, draw,
+    away_win) -- so summarize()/log_loss()/ranked_probability_score()
+    work identically on both, unmodified.
+
+    Deliberately a SEPARATE question from run_backtest(): this only
+    covers fixtures the live archive actually predicted in real time,
+    scored only once their real result exists -- "is the model doing
+    well right now," never "would it have worked historically." Only a
+    fixture whose entity_id resolves to an ACTUAL played match (result
+    known) is included; a forecast for a fixture not yet played is
+    silently excluded, not scored as wrong or blank.
+
+    entity_id is "{league}|{season}|{home_team}|{away_team}" (see
+    live_predictions._fixture_entity_id) -- league+season+ordered team
+    pair is unique for a standard round-robin league, and survives a
+    fixture being postponed a few days within the same season, unlike
+    joining on the exact archived date.
+    """
+    forecasts = archive.read_forecasts()
+    forecasts = forecasts[forecasts["entity_type"] == "fixture"]
+    if forecasts.empty:
+        return pd.DataFrame(columns=["date", "league", "home_team", "away_team", "result", "source"] + OUTCOME_COLS)
+
+    parts = forecasts["entity_id"].str.split("|", expand=True)
+    forecasts = forecasts.assign(league=parts[0], season=parts[1], home_team=parts[2], away_team=parts[3])
+
+    wide = forecasts.pivot_table(index=["league", "season", "home_team", "away_team", "source"],
+                                  columns="metric", values="value", aggfunc="last").reset_index()
+
+    matches = matches if matches is not None else elo.load_all_matches()
+    results = matches.dropna(subset=["result"])[["league", "season", "home_team", "away_team", "date", "result"]]
+    scored = wide.merge(results, on=["league", "season", "home_team", "away_team"], how="inner")
+    if scored.empty:
+        return pd.DataFrame(columns=["date", "league", "home_team", "away_team", "result", "source"] + OUTCOME_COLS)
+
+    return scored[["date", "league", "home_team", "away_team", "result", "source"] + OUTCOME_COLS]

@@ -5,26 +5,23 @@ fpl-team-3,Bournemouth,3,,,Bournemouth,Bournemouth,England,1,1.0,exact,
 fpl-team-4,Brentford,4,,,Brentford,Brentford,England,1,1.0,exact,
 fpl-team-5,Brighton,5,,,Brighton,Brighton,England,1,1.0,exact,
 fpl-team-6,Chelsea,6,,,Chelsea,Chelsea,England,1,1.0,exact,
-fpl-team-7,Coventry City,7,,,,,England,1,1.0,exact,
+fpl-team-7,Coventry City,7,,,Coventry,Coventry,England,1,1.0,exact,2026-08-28T12:15:46.297622+00:00
 fpl-team-8,Crystal Palace,8,,,Crystal Palace,Crystal Palace,England,1,1.0,exact,
 fpl-team-9,Everton,9,,,Everton,Everton,England,1,1.0,exact,
 fpl-team-10,Fulham,10,,,Fulham,Fulham,England,1,1.0,exact,
-fpl-team-11,Hull City,11,,,,,England,1,1.0,exact,
-fpl-team-12,Ipswich Town,12,,,,,England,1,1.0,exact,
+fpl-team-11,Hull City,11,,,Hull,Hull,England,1,1.0,exact,2026-08-28T12:15:46.297622+00:00
+fpl-team-12,Ipswich Town,12,,,Ipswich,Ipswich,England,1,1.0,exact,2026-08-28T12:15:46.297622+00:00
 fpl-team-13,Leeds,13,,,Leeds,Leeds,England,1,1.0,exact,
 fpl-team-14,Liverpool,14,,,Liverpool,Liverpool,England,1,1.0,exact,
-fpl-team-15,Man City,15,,,Man City,,England,1,1.0,exact,
+fpl-team-15,Man City,15,,,Man City,Manchester City,England,1,1.0,exact,
 fpl-team-16,Man Utd,16,,,Man United,Manchester United,England,1,1.0,exact,
-fpl-team-17,Newcastle,17,,,Newcastle,,England,1,1.0,exact,
-fpl-team-18,Nott'm Forest,18,,,Nott'm Forest,,England,1,1.0,exact,
+fpl-team-17,Newcastle,17,,,Newcastle,Newcastle United,England,1,1.0,exact,
+fpl-team-18,Nott'm Forest,18,,,Nott'm Forest,Nottingham Forest,England,1,1.0,exact,
 fpl-team-19,Spurs,19,,,Tottenham,Tottenham,England,1,1.0,exact,
 fpl-team-20,Sunderland,20,,,Sunderland,Sunderland,England,1,1.0,exact,
 hist-team-burnley,Burnley,,,,Burnley,Burnley,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
 hist-team-cardiff,Cardiff,,,,Cardiff,Cardiff,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
-hist-team-coventry,Coventry,,,,Coventry,Coventry,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
 hist-team-huddersfield,Huddersfield,,,,Huddersfield,Huddersfield,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
-hist-team-hull,Hull,,,,Hull,Hull,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
-hist-team-ipswich,Ipswich,,,,Ipswich,Ipswich,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
 hist-team-leicester,Leicester,,,,Leicester,Leicester,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
 hist-team-luton,Luton,,,,Luton,Luton,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00
 hist-team-middlesbrough,Middlesbrough,,,,Middlesbrough,Middlesbrough,England,1,1.0,historical_seed,2026-08-28T12:15:46.297622+00:00

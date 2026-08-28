@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from core import archive
 from validation import scoreboard as sb
 from models import elo, match
 
@@ -249,7 +250,109 @@ def test_run_backtest_adds_npxg_source_when_coverage_exists():
     assert "dixon_coles_npxg_blended" in scored["source"].values
 
 
+def test_run_backtest_adds_glm_source_when_covariate_coverage_exists():
+    matches = _synthetic_multiseason_matches()
+    rng = np.random.default_rng(4)
+    matches["home_npxg"] = matches["home_goals"] * 0.9
+    matches["away_npxg"] = matches["away_goals"] * 0.9
+    matches["home_ppda"] = rng.uniform(5, 15, len(matches))
+    matches["away_ppda"] = rng.uniform(5, 15, len(matches))
+    matches["home_deep"] = rng.integers(0, 15, len(matches))
+    matches["away_deep"] = rng.integers(0, 15, len(matches))
+
+    scored = sb.run_backtest(matches, min_train_seasons=2)
+    assert "dixon_coles_glm" in scored["source"].values
+    assert "dixon_coles_glm_blended" in scored["source"].values
+    glm_rows = scored[scored["source"] == "dixon_coles_glm"]
+    assert glm_rows[["home_win", "draw", "away_win"]].notna().any().any()   # at least some rows actually scored
+
+
+def test_run_backtest_omits_glm_source_without_covariate_coverage():
+    matches = _synthetic_multiseason_matches()   # no ppda/deep/npxg anywhere
+    scored = sb.run_backtest(matches, min_train_seasons=2)
+    assert "dixon_coles_glm" not in scored["source"].values
+
+
 def test_dixon_coles_predictions_target_columns_cover_goals_xg_and_npxg():
     assert sb.TARGET_COLUMNS["goals"] == ("home_goals", "away_goals")
     assert sb.TARGET_COLUMNS["xg"] == ("home_xg", "away_xg")
     assert sb.TARGET_COLUMNS["npxg"] == ("home_npxg", "away_npxg")
+
+
+# ---------------------------------------------------------------------------
+# score_archived_forecasts -- the LIVE (not backtest) tracking view
+# ---------------------------------------------------------------------------
+
+def _archive_forecast(as_of, entity_id, source, probs):
+    df = pd.DataFrame([
+        {"target_event": entity_id, "entity_id": entity_id, "entity_type": "fixture",
+         "metric": outcome, "value": p}
+        for outcome, p in probs.items()
+    ])
+    archive.write_forecast(source, as_of, df)
+
+
+def test_score_archived_forecasts_joins_a_played_match_to_its_forecast(tmp_path, monkeypatch):
+    monkeypatch.setattr(archive, "ARCHIVE_ROOT", tmp_path)
+    _archive_forecast("2024-08-10", "E0|2425|A|B", "dixon_coles",
+                      {"home_win": 0.5, "draw": 0.3, "away_win": 0.2})
+    matches = pd.DataFrame([{"league": "E0", "season": "2425", "home_team": "A", "away_team": "B",
+                             "date": "2024-08-17", "result": "H"}])
+
+    scored = sb.score_archived_forecasts(matches)
+    assert len(scored) == 1
+    row = scored.iloc[0]
+    assert row["result"] == "H"
+    assert row["source"] == "dixon_coles"
+    assert row["home_win"] == pytest.approx(0.5)
+    assert row["draw"] == pytest.approx(0.3)
+    assert row["away_win"] == pytest.approx(0.2)
+
+
+def test_score_archived_forecasts_excludes_a_fixture_not_yet_played(tmp_path, monkeypatch):
+    monkeypatch.setattr(archive, "ARCHIVE_ROOT", tmp_path)
+    _archive_forecast("2024-08-10", "E0|2425|A|B", "dixon_coles",
+                      {"home_win": 0.5, "draw": 0.3, "away_win": 0.2})
+    no_results_yet = pd.DataFrame(columns=["league", "season", "home_team", "away_team", "date", "result"])
+
+    scored = sb.score_archived_forecasts(no_results_yet)
+    assert scored.empty
+
+
+def test_score_archived_forecasts_keeps_sources_separate(tmp_path, monkeypatch):
+    monkeypatch.setattr(archive, "ARCHIVE_ROOT", tmp_path)
+    _archive_forecast("2024-08-10", "E0|2425|A|B", "dixon_coles",
+                      {"home_win": 0.5, "draw": 0.3, "away_win": 0.2})
+    _archive_forecast("2024-08-10", "E0|2425|A|B", "closing_line",
+                      {"home_win": 0.6, "draw": 0.25, "away_win": 0.15})
+    matches = pd.DataFrame([{"league": "E0", "season": "2425", "home_team": "A", "away_team": "B",
+                             "date": "2024-08-17", "result": "H"}])
+
+    scored = sb.score_archived_forecasts(matches)
+    assert set(scored["source"]) == {"dixon_coles", "closing_line"}
+    by_source = scored.set_index("source")["home_win"]
+    assert by_source["dixon_coles"] == pytest.approx(0.5)
+    assert by_source["closing_line"] == pytest.approx(0.6)
+
+
+def test_score_archived_forecasts_empty_when_nothing_archived_at_all(tmp_path, monkeypatch):
+    monkeypatch.setattr(archive, "ARCHIVE_ROOT", tmp_path)
+    scored = sb.score_archived_forecasts(pd.DataFrame())
+    assert scored.empty
+    assert list(scored.columns) == ["date", "league", "home_team", "away_team", "result", "source"] + sb.OUTCOME_COLS
+
+
+def test_score_archived_forecasts_feeds_summarize_directly(tmp_path, monkeypatch):
+    """The whole point: the live archive's scored shape must be usable
+    by the exact same summarize()/log_loss() the historical backtest
+    uses, with no separate code path."""
+    monkeypatch.setattr(archive, "ARCHIVE_ROOT", tmp_path)
+    _archive_forecast("2024-08-10", "E0|2425|A|B", "dixon_coles",
+                      {"home_win": 0.8, "draw": 0.15, "away_win": 0.05})
+    matches = pd.DataFrame([{"league": "E0", "season": "2425", "home_team": "A", "away_team": "B",
+                             "date": "2024-08-17", "result": "H"}])
+
+    scored = sb.score_archived_forecasts(matches)
+    summary = sb.summarize(scored)
+    assert summary.iloc[0]["source"] == "dixon_coles"
+    assert summary.iloc[0]["log_loss"] == pytest.approx(-np.log(0.8))

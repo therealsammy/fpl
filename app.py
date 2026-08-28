@@ -1186,6 +1186,7 @@ def main():
             st.Page("pages/Ledger_Market_Efficiency.py", title="Market efficiency",
                     url_path="ledger-market-efficiency"),
             st.Page("pages/Ledger_Scoreboard.py", title="Scoreboard", url_path="ledger-scoreboard"),
+            st.Page("pages/Ledger_GLM.py", title="GLM", url_path="ledger-glm"),
         ],
     }
     pg = st.navigation(pages, position="top")

@@ -66,6 +66,57 @@ def load_backtest(league: str, min_train_seasons: int = scoreboard.DEFAULT_MIN_T
     return scoreboard.run_backtest(matches, leagues=[league], min_train_seasons=min_train_seasons)
 
 
+@st.cache_data(ttl=CACHE_TTL, show_spinner=False)
+def load_matches_with_form(league: str) -> pd.DataFrame:
+    """One league's matches with home_{c}_form/away_{c}_form columns
+    attached (models.match.compute_rolling_form) -- the GLM's covariate
+    inputs, both for fitting and for reading a specific historical
+    match's own form values."""
+    matches = load_matches_with_xg()
+    league_matches = matches[matches["league"] == league].reset_index(drop=True)
+    glm_stats = [c.replace("_form", "") for c in scoreboard.GLM_COVARIATES]
+    return match.compute_rolling_form(league_matches, glm_stats)
+
+
+@st.cache_data(ttl=CACHE_TTL, show_spinner="Fitting the GLM…")
+def load_glm(league: str) -> dict:
+    """{'strengths': ..., 'rho': ..., 'base_strengths': ...} -- the GLM
+    fit (attack/defense/home_advantage/coefficients) on ALL available
+    history for this league, plus rho and the plain (non-GLM)
+    strengths for a same-fixture comparison. Unlike load_backtest, this
+    is the best full-data fit for live use, not a walk-forward holdout
+    fit -- the two answer different questions (does this help,
+    historically vs what does the model say right now) and shouldn't
+    be confused for each other."""
+    league_matches = load_matches_with_form(league)
+    strengths = match.fit_team_strengths_glm(league_matches, scoreboard.GLM_COVARIATES)
+    base_strengths = match.fit_team_strengths(league_matches)
+    rho = match.fit_rho(league_matches, base_strengths)
+    return {"strengths": strengths, "rho": rho, "base_strengths": base_strengths}
+
+
+@st.cache_data(ttl=CACHE_TTL, show_spinner=False)
+def load_live_scoreboard() -> pd.DataFrame:
+    """Live (not backtest) source-vs-result scoreboard: every fixture
+    models.live_predictions.py archived before kickoff, joined to its
+    real result once played. See validation.scoreboard.
+    score_archived_forecasts for why this is kept as a genuinely
+    separate question from load_backtest()'s historical walk-forward
+    view. Cached mainly because reading every file under
+    data/forecasts/ isn't free once a season's worth has piled up."""
+    return scoreboard.score_archived_forecasts(load_matches())
+
+
+@st.cache_data(ttl=CACHE_TTL, show_spinner=False)
+def load_live_odds_predictions() -> pd.DataFrame:
+    """Thin cached wrapper -- see models.match.load_live_odds_predictions
+    for what this actually does. Kept as a separate function (rather than
+    calling the pure one directly from every page) purely so it's cached:
+    the underlying id-registry resolution isn't expensive, but there's no
+    reason to redo it on every widget interaction either."""
+    return match.load_live_odds_predictions()
+
+
 def league_label(code: str) -> str:
     return LEAGUES.get(code, code)
 
