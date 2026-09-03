@@ -415,26 +415,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,Girona,,Arsenal,0.462
 2026-08-28,team,understat,Real Oviedo,,Coventry,0.421
 2026-08-28,team,understat,Mallorca,,Aston Villa,0.421
-2026-08-28,team,understat,Real Madrid,,Arsenal,0.556
-2026-08-28,team,understat,Celta Vigo,,Chelsea,0.471
-2026-08-28,team,understat,Rayo Vallecano,,Aston Villa,0.56
-2026-08-28,team,understat,Espanyol,,Liverpool,0.471
-2026-08-28,team,understat,Barcelona,,Arsenal,0.625
-2026-08-28,team,understat,Real Sociedad,,Crystal Palace,0.444
-2026-08-28,team,understat,Villarreal,,Arsenal,0.588
-2026-08-28,team,understat,Alaves,,Wolves,0.667
-2026-08-28,team,understat,Sevilla,,Aston Villa,0.667
-2026-08-28,team,understat,Racing Santander,,Man City,0.417
-2026-08-28,team,understat,Levante,,Leeds,0.5
-2026-08-28,team,understat,Elche,,Chelsea,0.5
-2026-08-28,team,understat,Atletico Madrid,,Leicester,0.417
-2026-08-28,team,understat,Malaga,,Aston Villa,0.353
-2026-08-28,team,understat,Real Betis,,Chelsea,0.471
-2026-08-28,team,understat,Athletic Club,,Hull City,0.364
-2026-08-28,team,understat,Valencia,,Everton,0.4
-2026-08-28,team,understat,Getafe,,Brentford,0.4
-2026-08-28,team,understat,Osasuna,,Swansea,0.571
-2026-08-28,team,understat,Deportivo La Coruna,,Sunderland,0.483
 2026-08-28,team,understat,"Freiburg,Werder Bremen",,Brentford,0.467
 2026-08-28,team,understat,"Augsburg,Bayern Munich",,Bournemouth,0.438
 2026-08-28,team,understat,"Hertha Berlin,Mainz 05",,Man Utd,0.357
@@ -470,7 +450,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"Hertha Berlin,Werder Bremen",,Bournemouth,0.378
 2026-08-28,team,understat,"Hoffenheim,Werder Bremen",,Brentford,0.438
 2026-08-28,team,understat,Fortuna Duesseldorf,,Sheffield United,0.4
-2026-08-28,team,understat,Paderborn,,Everton,0.5
 2026-08-28,team,understat,"Bayer Leverkusen,Union Berlin",,Everton,0.343
 2026-08-28,team,understat,"Mainz 05,Wolfsburg",,Wolves,0.348
 2026-08-28,team,understat,"Hoffenheim,Schalke 04",,Sheffield United,0.333
@@ -497,7 +476,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"Schalke 04,Union Berlin",,Sunderland,0.375
 2026-08-28,team,understat,"Union Berlin,VfB Stuttgart",,Brighton,0.364
 2026-08-28,team,understat,"Bayern Munich,Borussia M.Gladbach",,Man City,0.256
-2026-08-28,team,understat,Schalke 04,,Stoke,0.4
 2026-08-28,team,understat,Hertha Berlin,,Everton,0.4
 2026-08-28,team,understat,"Borussia Dortmund,Werder Bremen",,Nott'm Forest,0.381
 2026-08-28,team,understat,"Borussia M.Gladbach,Union Berlin",,Brighton,0.368
@@ -528,26 +506,11 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"Bayer Leverkusen,Wolfsburg",,Arsenal,0.375
 2026-08-28,team,understat,"FC Heidenheim,VfB Stuttgart",,Leicester,0.343
 2026-08-28,team,understat,"Borussia Dortmund,Hoffenheim",,Nott'm Forest,0.359
-2026-08-28,team,understat,Werder Bremen,,Brentford,0.545
 2026-08-28,team,understat,"Bayer Leverkusen,Borussia M.Gladbach",,Arsenal,0.341
-2026-08-28,team,understat,Hoffenheim,,Sheffield United,0.462
-2026-08-28,team,understat,Bayer Leverkusen,,Arsenal,0.435
-2026-08-28,team,understat,Mainz 05,,Man City,0.5
-2026-08-28,team,understat,RasenBallsport Leipzig,,Arsenal,0.414
 2026-08-28,team,understat,"Bayern Munich,FC Cologne",,Bournemouth,0.353
-2026-08-28,team,understat,Borussia M.Gladbach,,Crystal Palace,0.438
-2026-08-28,team,understat,FC Cologne,,Wolves,0.375
-2026-08-28,team,understat,VfB Stuttgart,,Aston Villa,0.333
 2026-08-28,team,understat,St. Pauli,,West Ham,0.5
-2026-08-28,team,understat,Eintracht Frankfurt,,Man City,0.37
 2026-08-28,team,understat,Wolfsburg,,Wolves,0.533
-2026-08-28,team,understat,Borussia Dortmund,,Nott'm Forest,0.483
 2026-08-28,team,understat,FC Heidenheim,,Chelsea,0.4
-2026-08-28,team,understat,Augsburg,,Spurs,0.462
-2026-08-28,team,understat,Freiburg,,Burnley,0.4
-2026-08-28,team,understat,Hamburger SV,,West Ham,0.5
-2026-08-28,team,understat,Union Berlin,,Brighton,0.5
-2026-08-28,team,understat,Bayern Munich,,Bournemouth,0.5
 2026-08-28,team,understat,"Chievo,Torino",,Everton,0.526
 2026-08-28,team,understat,"Genoa,Sassuolo",,Arsenal,0.4
 2026-08-28,team,understat,"AC Milan,Empoli",,Man City,0.455
@@ -655,7 +618,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"AC Milan,Torino",,Man City,0.455
 2026-08-28,team,understat,"Atalanta,Inter",,Leicester,0.455
 2026-08-28,team,understat,"Atalanta,Genoa",,Crystal Palace,0.444
-2026-08-28,team,understat,"Cagliari,Sassuolo",,Arsenal,0.435
 2026-08-28,team,understat,"Atalanta,Cagliari",,Crystal Palace,0.4
 2026-08-28,team,understat,"Salernitana,Sampdoria",,Sunderland,0.4
 2026-08-28,team,understat,"Salernitana,Venezia",,Sunderland,0.357
@@ -755,26 +717,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,Pisa,,Spurs,0.444
 2026-08-28,team,understat,Verona,,Everton,0.769
 2026-08-28,team,understat,Cremonese,,Chelsea,0.5
-2026-08-28,team,understat,Atalanta,,Crystal Palace,0.455
-2026-08-28,team,understat,Juventus,,Coventry,0.5
-2026-08-28,team,understat,AC Milan,,Man City,0.625
-2026-08-28,team,understat,Como,,Bournemouth,0.4
-2026-08-28,team,understat,Udinese,,Newcastle,0.5
-2026-08-28,team,understat,Inter,,Leicester,0.571
-2026-08-28,team,understat,Lazio,,Liverpool,0.429
-2026-08-28,team,understat,Lecce,,Leeds,0.6
-2026-08-28,team,understat,Napoli,,Arsenal,0.462
-2026-08-28,team,understat,Cagliari,,Cardiff,0.4
-2026-08-28,team,understat,Monza,,Luton,0.4
-2026-08-28,team,understat,Parma Calcio 1913,,Crystal Palace,0.452
-2026-08-28,team,understat,Genoa,,Arsenal,0.5
-2026-08-28,team,understat,Venezia,,Arsenal,0.429
-2026-08-28,team,understat,Frosinone,,Nott'm Forest,0.476
-2026-08-28,team,understat,Torino,,Luton,0.545
-2026-08-28,team,understat,Sassuolo,,Aston Villa,0.421
-2026-08-28,team,understat,Bologna,,Brighton,0.4
-2026-08-28,team,understat,Roma,,West Brom,0.462
-2026-08-28,team,understat,Fiorentina,,Nott'm Forest,0.545
 2026-08-28,team,understat,"Caen,Evian Thonon Gaillard",,Aston Villa,0.389
 2026-08-28,team,understat,"Marseille,Monaco",,Arsenal,0.545
 2026-08-28,team,understat,"Evian Thonon Gaillard,Lorient",,Aston Villa,0.359
@@ -905,24 +847,6 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-08-28,team,understat,"Metz,Monaco",,Everton,0.471
 2026-08-28,team,understat,Metz,,West Ham,0.5
 2026-08-28,team,understat,Nantes,,Newcastle,0.533
-2026-08-28,team,understat,Paris Saint Germain,,Man Utd,0.385
-2026-08-28,team,understat,Marseille,,Arsenal,0.625
-2026-08-28,team,understat,Rennes,,Leeds,0.545
-2026-08-28,team,understat,Strasbourg,,Middlesbrough,0.435
-2026-08-28,team,understat,Lens,,Leeds,0.667
-2026-08-28,team,understat,Auxerre,,Huddersfield,0.421
-2026-08-28,team,understat,Nice,,Norwich,0.545
-2026-08-28,team,understat,Lorient,,Coventry,0.533
-2026-08-28,team,understat,Le Mans,,Man City,0.533
-2026-08-28,team,understat,Brest,,West Brom,0.714
-2026-08-28,team,understat,Troyes,,Stoke,0.545
-2026-08-28,team,understat,Paris FC,,Cardiff,0.533
-2026-08-28,team,understat,Toulouse,,Stoke,0.462
-2026-08-28,team,understat,Lyon,,Luton,0.667
-2026-08-28,team,understat,Angers,,Arsenal,0.462
-2026-08-28,team,understat,Lille,,Hull,0.444
-2026-08-28,team,understat,Le Havre,,Arsenal,0.533
-2026-08-28,team,understat,Monaco,,Luton,0.364
 2026-08-28,team,football_data,Wigan,,Swansea,0.5
 2026-08-28,team,football_data,Oldham,,Fulham,0.667
 2026-08-28,team,football_data,Swindon,,Sunderland,0.471
@@ -1020,3 +944,80 @@ as_of,entity_type,source,name,hints,best_candidate,best_score
 2026-09-02,team,football_data,Nice,,Norwich,0.545
 2026-09-02,team,football_data,Le Mans,,Man City,0.533
 2026-09-02,team,football_data,Marseille,,Arsenal,0.625
+2026-09-03,team,understat,Real Madrid,,Arsenal,0.556
+2026-09-03,team,understat,Celta Vigo,,Chelsea,0.471
+2026-09-03,team,understat,Espanyol,,Liverpool,0.471
+2026-09-03,team,understat,Real Sociedad,,Crystal Palace,0.444
+2026-09-03,team,understat,Villarreal,,Arsenal,0.588
+2026-09-03,team,understat,Alaves,,Wolves,0.667
+2026-09-03,team,understat,Sevilla,,Aston Villa,0.667
+2026-09-03,team,understat,Levante,,Leeds,0.5
+2026-09-03,team,understat,Elche,,Chelsea,0.5
+2026-09-03,team,understat,Atletico Madrid,,Leicester,0.417
+2026-09-03,team,understat,Malaga,,Aston Villa,0.353
+2026-09-03,team,understat,Real Betis,,Chelsea,0.471
+2026-09-03,team,understat,Athletic Club,,Hull City,0.364
+2026-09-03,team,understat,Valencia,,Everton,0.4
+2026-09-03,team,understat,Getafe,,Brentford,0.4
+2026-09-03,team,understat,Barcelona,,Arsenal,0.625
+2026-09-03,team,understat,Osasuna,,Swansea,0.571
+2026-09-03,team,understat,Deportivo La Coruna,,Sunderland,0.483
+2026-09-03,team,understat,Racing Santander,,Man City,0.417
+2026-09-03,team,understat,Rayo Vallecano,,Aston Villa,0.56
+2026-09-03,team,understat,VfB Stuttgart,,Aston Villa,0.333
+2026-09-03,team,understat,Bayer Leverkusen,,Arsenal,0.435
+2026-09-03,team,understat,RasenBallsport Leipzig,,Arsenal,0.414
+2026-09-03,team,understat,Hamburger SV,,West Ham,0.5
+2026-09-03,team,understat,Bayern Munich,,Bournemouth,0.5
+2026-09-03,team,understat,Elversberg,,Wolves,0.5
+2026-09-03,team,understat,Mainz 05,,Man City,0.5
+2026-09-03,team,understat,Paderborn,,Everton,0.5
+2026-09-03,team,understat,Borussia M.Gladbach,,Crystal Palace,0.438
+2026-09-03,team,understat,Union Berlin,,Brighton,0.5
+2026-09-03,team,understat,Eintracht Frankfurt,,Man City,0.37
+2026-09-03,team,understat,FC Cologne,,Wolves,0.375
+2026-09-03,team,understat,Hoffenheim,,Sheffield United,0.462
+2026-09-03,team,understat,Borussia Dortmund,,Nott'm Forest,0.483
+2026-09-03,team,understat,Freiburg,,Burnley,0.4
+2026-09-03,team,understat,Werder Bremen,,Brentford,0.545
+2026-09-03,team,understat,Augsburg,,Spurs,0.462
+2026-09-03,team,understat,Schalke 04,,Stoke,0.4
+2026-09-03,team,understat,"Cagliari,Sassuolo",,Arsenal,0.435
+2026-09-03,team,understat,Atalanta,,Crystal Palace,0.455
+2026-09-03,team,understat,Juventus,,Wolves,0.429
+2026-09-03,team,understat,AC Milan,,Man City,0.625
+2026-09-03,team,understat,Inter,,Leicester,0.571
+2026-09-03,team,understat,Roma,,West Brom,0.462
+2026-09-03,team,understat,Lazio,,Liverpool,0.429
+2026-09-03,team,understat,Lecce,,Leeds,0.6
+2026-09-03,team,understat,Udinese,,Newcastle,0.5
+2026-09-03,team,understat,Napoli,,Arsenal,0.462
+2026-09-03,team,understat,Monza,,Luton,0.4
+2026-09-03,team,understat,Como,,Bournemouth,0.4
+2026-09-03,team,understat,Parma Calcio 1913,,Crystal Palace,0.452
+2026-09-03,team,understat,Cagliari,,Cardiff,0.4
+2026-09-03,team,understat,Genoa,,Arsenal,0.5
+2026-09-03,team,understat,Venezia,,Arsenal,0.429
+2026-09-03,team,understat,Torino,,Luton,0.545
+2026-09-03,team,understat,Sassuolo,,Aston Villa,0.421
+2026-09-03,team,understat,Bologna,,Brighton,0.4
+2026-09-03,team,understat,Fiorentina,,Nott'm Forest,0.545
+2026-09-03,team,understat,Frosinone,,Nott'm Forest,0.476
+2026-09-03,team,understat,Marseille,,Arsenal,0.625
+2026-09-03,team,understat,Rennes,,Leeds,0.545
+2026-09-03,team,understat,Strasbourg,,Middlesbrough,0.435
+2026-09-03,team,understat,Lens,,Leeds,0.667
+2026-09-03,team,understat,Auxerre,,Huddersfield,0.421
+2026-09-03,team,understat,Brest,,West Brom,0.714
+2026-09-03,team,understat,Troyes,,Stoke,0.545
+2026-09-03,team,understat,Paris FC,,Cardiff,0.533
+2026-09-03,team,understat,Toulouse,,Stoke,0.462
+2026-09-03,team,understat,Lyon,,Luton,0.667
+2026-09-03,team,understat,Angers,,Arsenal,0.462
+2026-09-03,team,understat,Lille,,Hull City,0.429
+2026-09-03,team,understat,Le Havre,,Arsenal,0.533
+2026-09-03,team,understat,Monaco,,Luton,0.364
+2026-09-03,team,understat,Paris Saint Germain,,Man Utd,0.385
+2026-09-03,team,understat,Lorient,,Nott'm Forest,0.526
+2026-09-03,team,understat,Nice,,Norwich,0.545
+2026-09-03,team,understat,Le Mans,,Man City,0.533
